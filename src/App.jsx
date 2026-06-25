@@ -17,7 +17,7 @@ const getEpicDisplayName = (summary) =>
 
 // ── 상태 판정 ────────────────────────────────────────────────
 const DONE_S   = new Set(["최종 완료","# 최종 완료","작업 완료","기획 완료","디자인 작업 완료","이슈 아님","# 이슈 아님"]);
-const INPROG_S = new Set(["# QA 진행 중","# 개발 진행 중","# 디자인 진행 중","# QA 대기","# 디자인 대기","진행 중","디자인 작업 진행 중","디자인 분석","디자인 작업 완료","기획 완료"]);
+const INPROG_S = new Set(["# QA 진행 중","# 개발 진행 중","# 디자인 진행 중","# QA 대기","# 디자인 대기","진행 중","디자인 작업 진행 중","디자인 분석"]);
 const DEPLOY_S = new Set(["# 배포 대기"]);
 const TODO_S   = new Set(["할 일","# 할 일","이슈 오픈","Backlog","BACKLOG","백로그"]);
 
@@ -89,20 +89,24 @@ const Tooltip = ({tips, color}) => {
 // ── 메인 ─────────────────────────────────────────────────────
 export default function App() {
   const [cat, setCat] = useState("전체");
+  const [query, setQuery] = useState("");
   const [data, setData] = useState(null);       // { epics, tasks, subtasks }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
 
-  const fetchAll = async () => {
-    setLoading(true);
+  const fetchAll = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     setError(null);
     try {
       const res = await fetch("/.netlify/functions/jira?type=all");
       const json = await res.json();
       if (json.error) throw new Error(json.error);
       setData(json);
-      setLastUpdated(new Date().toLocaleString("ko-KR"));
+      const now = new Date().toLocaleString("ko-KR");
+      setLastUpdated(json.cached
+        ? `캐시 · ${new Date(json.cachedAt).toLocaleTimeString("ko-KR")}`
+        : `실시간 · ${now}`);
     } catch(e) {
       setError("데이터 로드 실패: " + e.message);
     } finally {
@@ -110,7 +114,12 @@ export default function App() {
     }
   };
 
-  useEffect(() => { fetchAll(); }, []);
+  const forceRefresh = async () => {
+    await fetch("/.netlify/functions/jira?type=refresh");
+    fetchAll(true);
+  };
+
+  useEffect(() => { fetchAll(true); }, []);
 
   // ── 데이터 가공 ────────────────────────────────────────────
   const epics = (data?.epics || []).map(i => ({
@@ -120,16 +129,18 @@ export default function App() {
     status: i.fields.status.name,
   }));
 
-  const tasks = (data?.tasks || []).map(i => ({
-    key: i.key,
-    epicKey: i.fields.parent?.key || "",
-    name: i.fields.summary.replace(/\[.*?\]\s?/g,"").trim(),
-    status: i.fields.status.name,
-    assignee: i.fields.assignee?.displayName || "미배정",
-    created: fmt(i.fields.customfield_10056),
-    resolutiondate: fmt(i.fields.resolutiondate),
-    duedate: fmt(i.fields.customfield_10501 || i.fields.duedate),
-  }));
+  const tasks = (data?.tasks || [])
+    .filter(i => !(i.fields.customfield_10054 || []).includes("PNB-UPGRADE"))
+    .map(i => ({
+      key: i.key,
+      epicKey: i.fields.parent?.key || "",
+      name: i.fields.summary.replace(/\[.*?\]\s?/g,"").trim(),
+      status: i.fields.status.name,
+      assignee: i.fields.assignee?.displayName || "미배정",
+      created: fmt(i.fields.customfield_10056),
+      resolutiondate: fmt(i.fields.resolutiondate),
+      duedate: fmt(i.fields.duedate),
+    }));
 
   // 하위 작업을 부모 키 기준으로 그룹핑
   const subtaskMap = {};
@@ -144,7 +155,7 @@ export default function App() {
       assignee: i.fields.assignee?.displayName || "미배정",
       created: fmt(i.fields.customfield_10056),
       resolutiondate: fmt(i.fields.resolutiondate),
-      duedate: fmt(i.fields.customfield_10501 || i.fields.duedate),
+      duedate: fmt(i.fields.duedate),
     });
   });
 
@@ -175,7 +186,21 @@ export default function App() {
   };
 
   const categories = [...new Set(epics.map(e=>e.category))];
-  const filteredEpics = cat==="전체" ? epics : epics.filter(e=>e.category===cat);
+  // 검색 필터: 티켓명 · 담당자 · 티켓 키
+  const q = query.trim().toLowerCase();
+  const filteredEpics = epics.filter(e => {
+    if (cat !== "전체" && e.category !== cat) return false;
+    if (!q) return true;
+    // 에픽 하위 작업 티켓 중 하나라도 검색어에 매칭되면 에픽 표시
+    const epicTasks = tasks.filter(t => t.epicKey === e.key);
+    return epicTasks.some(t => {
+      const taskHit = t.name.toLowerCase().includes(q) || t.key.toLowerCase().includes(q) || t.assignee.toLowerCase().includes(q);
+      const subHit = (subtaskMap[t.key]||[]).some(s =>
+        s.name.toLowerCase().includes(q) || s.key.toLowerCase().includes(q) || s.assignee.toLowerCase().includes(q)
+      );
+      return taskHit || subHit;
+    });
+  });
 
   // ── 날짜 표시 ─────────────────────────────────────────────
   const dateDisplay = (status, rd, dd) => {
@@ -187,7 +212,7 @@ export default function App() {
   if (loading && !data) return (
     <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#f1f5f9",flexDirection:"column",gap:"12px"}}>
       <div style={{width:"40px",height:"40px",border:"3px solid #e2e8f0",borderTop:"3px solid #6366f1",borderRadius:"50%",animation:"spin 1s linear infinite"}}/>
-      <p style={{color:"#64748b",fontSize:"14px"}}>Jira 데이터 불러오는 중...</p>
+      <p style={{color:"#64748b",fontSize:"14px"}}>데이터 불러오는 중...</p>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
@@ -208,8 +233,8 @@ export default function App() {
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"10px"}}>
           <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
             <div style={{width:"5px",height:"26px",background:"linear-gradient(180deg,#6366f1,#8b5cf6)",borderRadius:"3px"}}/>
-            <h1 style={{margin:0,fontSize:"19px",fontWeight:700,color:"#0f172a"}}>CRM Admin 구축 현황</h1>
             <JLink k="PNB-628"><span style={{fontSize:"11px",color:"#6366f1",background:"#eef2ff",padding:"2px 8px",borderRadius:"20px",fontWeight:600}}>PNB-628</span></JLink>
+            <h1 style={{margin:0,fontSize:"19px",fontWeight:700,color:"#0f172a"}}>CRM Admin 신규 구축 - 작업 현황</h1>
           </div>
           <div style={{textAlign:"right"}}>
             <span style={{fontSize:"28px",fontWeight:800,color:allItems.pct===100?"#16a34a":"#6366f1",lineHeight:1}}>{allItems.pct}%</span>
@@ -225,18 +250,18 @@ export default function App() {
             ? <span style={{fontSize:"10px",color:"#6366f1"}}>⟳ 불러오는 중...</span>
             : error
               ? <span style={{fontSize:"10px",color:"#ef4444"}}>{error}</span>
-              : <span style={{fontSize:"10px",color:"#22c55e"}}>✓ 실시간 · {lastUpdated}</span>
+              : <span style={{fontSize:"10px",color:"#22c55e"}}>✓ {lastUpdated}</span>
           }
-          <button onClick={fetchAll} disabled={loading} style={{fontSize:"10px",color:"#6366f1",background:"#eef2ff",border:"none",borderRadius:"6px",padding:"2px 8px",cursor:"pointer"}}>새로고침</button>
+          <button onClick={()=>fetchAll(true)} disabled={loading} style={{fontSize:"10px",color:"#6366f1",background:"#eef2ff",border:"none",borderRadius:"6px",padding:"2px 8px",cursor:"pointer"}}>새로고침</button>
         </div>
       </div>
 
       {/* 상단 카드 */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:"10px",marginBottom:"16px"}}>
         {[
-          {l:"전체 작업",v:totalTasks,c:"#6366f1",sub:"작업 티켓 기준",tip:["전체 작업 티켓"]},
+          {l:"전체 작업",v:totalTasks,c:"#0ea5e9",sub:"작업 티켓 기준",tip:["전체 작업 티켓"]},
           {l:"완료",v:doneTasks,c:"#16a34a",sub:"작업완료·최종완료·이슈아님",tip:["# 최종 완료","# 이슈 아님"]},
-          {l:"진행 중",v:inProg,c:"#7c3aed",sub:"기획·디자인·개발·QA",tip:["# QA 진행 중","# 개발 진행 중","# 디자인 진행 중","# QA 대기","# 디자인 대기"]},
+          {l:"진행 중",v:inProg,c:"#4f46e5",sub:"기획·디자인·개발·QA",tip:["# QA 진행 중","# 개발 진행 중","# 디자인 진행 중","# QA 대기","# 디자인 대기"]},
           {l:"배포 대기",v:deployWait,c:"#d97706",sub:"배포 대기",tip:["# 배포 대기"]},
           {l:"할 일",v:todoTasks,c:"#94a3b8",sub:"시작 전",tip:["할 일","Backlog"]},
         ].map(s=>(
@@ -249,18 +274,93 @@ export default function App() {
         ))}
       </div>
 
-      {/* 카테고리 필터 */}
-      <div style={{display:"flex",gap:"6px",flexWrap:"wrap",marginBottom:"14px"}}>
-        {["전체",...categories].map(c=>{
-          const a=cat===c; const col=c==="전체"?"#6366f1":CAT_C[c]||"#6366f1";
-          return <button key={c} onClick={()=>setCat(c)} style={{padding:"4px 13px",borderRadius:"20px",border:a?"none":"1px solid #e2e8f0",cursor:"pointer",fontSize:"12px",fontWeight:600,background:a?col:"#fff",color:a?"#fff":"#64748b",boxShadow:a?`0 2px 6px ${col}40`:"none"}}>{c}</button>;
-        })}
+      {/* 검색창 */}
+      <div style={{position:"relative",marginBottom:"10px"}}>
+        <span style={{position:"absolute",left:"12px",top:"50%",transform:"translateY(-50%)",fontSize:"13px",pointerEvents:"none",color:"#94a3b8",zIndex:1}}>🔍</span>
+        <input
+          type="text"
+          value={query}
+          onChange={e=>setQuery(e.target.value)}
+          placeholder="티켓명 · 담당자 · 티켓 키 검색..."
+          style={{width:"100%",padding:"8px 36px 8px 36px",borderRadius:"8px",border:"1px solid #e2e8f0",fontSize:"13px",color:"#374151",background:"#fff",outline:"none",boxShadow:"0 1px 3px rgba(0,0,0,0.04)",boxSizing:"border-box"}}
+          onFocus={e=>e.target.style.borderColor="#6366f1"}
+          onBlur={e=>e.target.style.borderColor="#e2e8f0"}
+        />
+        {query && (
+          <button onClick={()=>setQuery("")} style={{position:"absolute",right:"10px",top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:"#94a3b8",fontSize:"18px",lineHeight:1,padding:"2px 6px",borderRadius:"4px"}}>×</button>
+        )}
+      </div>
+
+      {/* 카테고리 필터 + 탭별 통계 */}
+      <div style={{background:"#fff",borderRadius:"10px",border:"1px solid #e2e8f0",marginBottom:"14px",overflow:"hidden"}}>
+        <div style={{padding:"10px 14px",display:"flex",gap:"6px",flexWrap:"wrap"}}>
+          {["전체",...categories].map(c=>{
+            const a=cat===c; const col=c==="전체"?"#6366f1":CAT_C[c]||"#6366f1";
+            return <button key={c} onClick={()=>setCat(c)} style={{padding:"4px 13px",borderRadius:"20px",border:a?"none":"1px solid #e2e8f0",cursor:"pointer",fontSize:"12px",fontWeight:600,background:a?col:"#fff",color:a?"#fff":"#64748b",boxShadow:a?`0 2px 6px ${col}40`:"none"}}>{c}</button>;
+          })}
+        </div>
+        <div style={{height:"1px",background:"#f1f5f9"}}/>
+        {/* 탭별 통계 */}
+        {(() => {
+          const filtered = tasks.filter(t=>{
+            // 카테고리 필터
+            if (cat !== "전체") {
+              const epic = epics.find(e=>e.key===t.epicKey);
+              if (epic?.category !== cat) return false;
+            }
+            // 검색어 필터
+            if (q) {
+              const taskHit = t.name.toLowerCase().includes(q) || t.key.toLowerCase().includes(q) || t.assignee.toLowerCase().includes(q);
+              const subHit = (subtaskMap[t.key]||[]).some(s =>
+                s.name.toLowerCase().includes(q) || s.key.toLowerCase().includes(q) || s.assignee.toLowerCase().includes(q)
+              );
+              if (!taskHit && !subHit) return false;
+            }
+            return true;
+          });
+          const total = filtered.length;
+          const done = filtered.filter(t=>isDone(t.status)).length;
+          const inP  = filtered.filter(t=>isInProg(t.status)).length;
+          const dep  = filtered.filter(t=>isDeploy(t.status)).length;
+          const todo = filtered.filter(t=>isTodo(t.status)||t.status==="할 일").length;
+          return (
+            <div style={{background:"#f8fafc",padding:"8px 16px",display:"flex",gap:"14px",alignItems:"center",flexWrap:"wrap"}}>
+              <span style={{fontSize:"11px",color:"#64748b"}}>{cat} · <strong style={{color:"#374151"}}>{total}개</strong> 작업 티켓</span>
+              <div style={{width:"1px",height:"14px",background:"#e2e8f0"}}/>
+              {[
+                {label:"완료",val:done,c:"#16a34a"},
+                {label:"진행 중",val:inP,c:"#4f46e5"},
+                {label:"배포 대기",val:dep,c:"#d97706"},
+                {label:"할 일",val:todo,c:"#94a3b8"},
+              ].map(s=>(
+                <div key={s.label} style={{display:"flex",alignItems:"center",gap:"5px"}}>
+                  <div style={{width:"6px",height:"6px",borderRadius:"50%",background:s.c,flexShrink:0}}/>
+                  <span style={{fontSize:"11px",color:"#94a3b8"}}>{s.label}</span>
+                  <span style={{fontSize:"12px",fontWeight:700,color:"#374151"}}>{s.val}</span>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
       </div>
 
       {/* 에픽 목록 */}
       <div style={{display:"flex",flexDirection:"column",gap:"10px"}}>
+        {filteredEpics.length === 0 && (
+          <div style={{background:"#fff",borderRadius:"12px",padding:"40px",textAlign:"center",border:"1px solid #e2e8f0",color:"#94a3b8",fontSize:"13px"}}>
+            {q ? `"${query}" 에 해당하는 티켓이 없습니다.` : "해당하는 에픽이 없습니다."}
+          </div>
+        )}
         {filteredEpics.map(epic => {
-          const epicTasks = tasks.filter(t=>t.epicKey===epic.key);
+          const epicTasks = tasks.filter(t => {
+            if (t.epicKey !== epic.key) return false;
+            if (!q) return true;
+            const taskHit = t.name.toLowerCase().includes(q) || t.key.toLowerCase().includes(q) || t.assignee.toLowerCase().includes(q);
+            const subHit = (subtaskMap[t.key]||[]).some(s =>
+              s.name.toLowerCase().includes(q) || s.key.toLowerCase().includes(q) || s.assignee.toLowerCase().includes(q)
+            );
+            return taskHit || subHit;
+          });
           const rate = getRate(epic.key);
           const cc = CAT_C[epic.category]||"#6366f1";
 
@@ -354,7 +454,12 @@ export default function App() {
         })}
       </div>
 
-      <p style={{marginTop:"14px",textAlign:"right",fontSize:"10px",color:"#cbd5e1"}}>CRM Admin 구축 현황 · 실시간 Jira 연동</p>
+      <div style={{marginTop:"14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <span style={{fontSize:"10px",color:"#cbd5e1"}}>CRM Admin 신규 구축 - 작업 현황</span>
+        <button onClick={forceRefresh} disabled={loading} style={{fontSize:"10px",color:"#cbd5e1",background:"none",border:"none",cursor:"pointer",textDecoration:"underline",padding:0}}>
+          강제 새로고침
+        </button>
+      </div>
     </div>
   );
 }

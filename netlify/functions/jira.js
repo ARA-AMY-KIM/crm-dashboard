@@ -1,87 +1,99 @@
+// 메모리 캐시 (Function 인스턴스 내에서 유지)
+let cache = null;
+let cacheTime = null;
+const CACHE_TTL = 10 * 60 * 1000; // 10분
+
+const fetchAll = async (jql, fields, headers, baseUrl) => {
+  let all = [];
+  let nextPageToken = undefined;
+  while (true) {
+    const body = { jql, maxResults: 100, fields };
+    if (nextPageToken) body.nextPageToken = nextPageToken;
+    const res = await fetch(`${baseUrl}/search/jql`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    const issues = data.issues || [];
+    all = all.concat(issues);
+    if (data.isLast || !data.nextPageToken || issues.length === 0) break;
+    nextPageToken = data.nextPageToken;
+  }
+  return all;
+};
+
 exports.handler = async (event) => {
   const email = process.env.JIRA_EMAIL;
   const token = process.env.JIRA_API_TOKEN;
   const baseUrl = "https://ajnetworks.atlassian.net/rest/api/3";
-
   const credentials = Buffer.from(`${email}:${token}`).toString("base64");
   const headers = {
     Authorization: `Basic ${credentials}`,
     "Content-Type": "application/json",
   };
-
-  // nextPageToken 기반 페이지네이션으로 전체 결과 가져오기
-  const fetchAll = async (jql, fields) => {
-    let all = [];
-    let nextPageToken = undefined;
-    while (true) {
-      const body = { jql, maxResults: 100, fields };
-      if (nextPageToken) body.nextPageToken = nextPageToken;
-
-      const res = await fetch(`${baseUrl}/search/jql`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(body),
-      });
-      const data = await res.json();
-      const issues = data.issues || [];
-      all = all.concat(issues);
-
-      if (data.isLast || !data.nextPageToken || issues.length === 0) break;
-      nextPageToken = data.nextPageToken;
-    }
-    return all;
-  };
-
+  const resHeaders = { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" };
   const { type } = event.queryStringParameters || {};
 
   try {
+    // 강제 새로고침
+    if (type === "refresh") {
+      cache = null;
+      cacheTime = null;
+      return { statusCode: 200, headers: resHeaders, body: JSON.stringify({ message: "캐시 초기화 완료" }) };
+    }
+
     if (type === "all") {
-      // 1. 에픽 조회
+      // 캐시 유효하면 바로 반환
+      if (cache && cacheTime && (Date.now() - cacheTime) < CACHE_TTL) {
+        return {
+          statusCode: 200,
+          headers: resHeaders,
+          body: JSON.stringify({ ...cache, cached: true, cachedAt: cacheTime }),
+        };
+      }
+
+      // 새 데이터 조회
       const epics = await fetchAll(
         "issueType=Epic AND parent=PNB-628 ORDER BY created ASC",
-        ["summary", "status", "assignee"]
+        ["summary", "status", "assignee"],
+        headers, baseUrl
       );
       const epicKeys = epics.map(i => i.key);
 
       if (!epicKeys.length) {
-        return {
-          statusCode: 200,
-          headers: { "Access-Control-Allow-Origin": "*" },
-          body: JSON.stringify({ epics: [], tasks: [], subtasks: [] }),
-        };
+        return { statusCode: 200, headers: resHeaders, body: JSON.stringify({ epics: [], tasks: [], subtasks: [], cached: false }) };
       }
 
-      // 2. 작업 티켓 조회
       const tasks = await fetchAll(
         `issueType in (작업,Story,Task) AND parent in (${epicKeys.join(",")}) ORDER BY parent ASC`,
-        ["summary", "status", "assignee", "parent", "resolutiondate", "duedate", "customfield_10056", "customfield_10501", "issuetype"]
+        ["summary", "status", "assignee", "parent", "resolutiondate", "duedate", "customfield_10056", "issuetype", "customfield_10054"],
+        headers, baseUrl
       );
       const taskKeys = tasks.map(i => i.key);
 
-      // 3. 하위 작업 조회
       let subtasks = [];
       if (taskKeys.length) {
         subtasks = await fetchAll(
           `issueType in subTaskIssueTypes() AND parent in (${taskKeys.join(",")}) ORDER BY parent ASC`,
-          ["summary", "status", "assignee", "parent", "issuetype", "resolutiondate", "customfield_10056", "customfield_10501"]
+          ["summary", "status", "assignee", "parent", "issuetype", "resolutiondate", "customfield_10056", "duedate"],
+          headers, baseUrl
         );
       }
 
+      // 캐시 저장
+      cache = { epics, tasks, subtasks };
+      cacheTime = Date.now();
+
       return {
         statusCode: 200,
-        headers: { "Access-Control-Allow-Origin": "*" },
-        body: JSON.stringify({ epics, tasks, subtasks }),
+        headers: resHeaders,
+        body: JSON.stringify({ ...cache, cached: false, cachedAt: cacheTime }),
       };
     }
 
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ error: "type=all 파라미터가 필요합니다" }),
-    };
+    return { statusCode: 400, headers: resHeaders, body: JSON.stringify({ error: "type=all 필요" }) };
   } catch (err) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: err.message }),
-    };
+    return { statusCode: 500, headers: resHeaders, body: JSON.stringify({ error: err.message }) };
   }
 };
