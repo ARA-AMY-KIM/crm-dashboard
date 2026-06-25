@@ -51,17 +51,20 @@ crm-dashboard/
 
 ---
 
-## 배포 방법
+## 배포 방법 (2026-06-25 변경: GitHub 자동배포)
 
-```powershell
-cd C:\Users\a\OneDrive\Desktop\crm-dashboard
-npm run build
-npx netlify-cli deploy --prod
-```
+이제 **GitHub에 push하면 Netlify가 자동으로 빌드·배포**한다. PowerShell 수동 배포는 더 이상 쓰지 않는다.
 
-> `public/chapter/index.html` 수정 후 **반드시 `npm run build` 실행.**  
-> build 결과물이 `dist/chapter/index.html`로 복사된 후 배포됨.  
-> `netlify deploy`는 기본적으로 빌드를 다시 돌리지 않고 현재 `dist/`를 업로드하므로, 빌드를 건너뛰면 수정이 반영되지 않는다.
+워크플로우:
+1. `public/chapter/index.html`(또는 `src/`, `chapter.js`) 등 소스 수정
+2. **GitHub Desktop**에서 Commit → Push origin (브랜치 `main`)
+3. 끝. Netlify가 자동으로 `npm run build` 실행 후 `dist/`를 배포한다.
+
+> - 원격 저장소: `github.com/ARA-AMY-KIM/crm-dashboard` (비공개), 브랜치 `main`
+> - Netlify 사이트 `aj-crm-dashboard`에 Git 연결(Continuous deployment)되어 있음. 빌드 설정은 `netlify.toml`(build `npm run build`, publish `dist`)을 따른다.
+> - 환경변수(`JIRA_EMAIL`, `JIRA_API_TOKEN`)는 Netlify 사이트에 등록되어 있음.
+> - ⚠️ 옛 방식(`npm run build` → `npx netlify-cli deploy --prod`)은 폐기. Git 자동배포와 섞어 쓰지 말 것.
+> - ⚠️ 저장소 안에 다른 폴더를 git 저장소째로 넣지 말 것(중첩 .git → gitlink 서브모듈로 잘못 커밋되어 Netlify 빌드가 실패함).
 
 ---
 
