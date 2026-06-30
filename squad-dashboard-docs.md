@@ -85,8 +85,9 @@ GET /.netlify/functions/jira?type=refresh    # 캐시 초기화
 **1단계 — 에픽**
 ```
 issueType=Epic AND parent=PNB-628 ORDER BY created ASC
-필드: summary, status, assignee
+필드: summary, status, assignee, customfield_10054
 ```
+> `customfield_10054`는 에픽 단위 PNB-UPGRADE 제외 판정을 위해 조회한다(2026-06-30 추가).
 
 **2단계 — 작업 티켓** (1단계 에픽 키들을 부모로)
 ```
@@ -163,7 +164,7 @@ issueType in subTaskIssueTypes() AND parent in (<작업키들>) ORDER BY parent 
 
 ## 알려진 함정 / 주의사항
 
-- **`PNB-UPGRADE` 제외는 작업 티켓에만 적용된다.** `App.jsx`의 필터(`customfield_10054`에 `PNB-UPGRADE` 포함 제외)는 `tasks`에만 걸려 있고, **에픽·하위 작업에는 적용되지 않는다.** 에픽이나 하위 작업에 `PNB-UPGRADE`가 달려 있어도 그대로 노출/집계되므로, 제외 정책을 계층 전체로 넓히려면 코드 보강 필요.
+- **`PNB-UPGRADE` 제외 범위 (2026-06-30 확장됨).** 이제 **에픽 또는 작업**에 라벨이 달리면 해당 티켓과 그 하위 전체가 제외된다. `App.jsx`가 라벨 달린 에픽 키를 `excludedEpicKeys`로 모은 뒤 ① 라벨 달린 에픽 제외, ② 라벨 달렸거나 부모 에픽이 제외 대상인 작업 제외 — 하위작업은 부모 작업과 함께 렌더·집계에서 자동으로 빠진다(하위작업 자체에는 라벨 검사 없음). 단, **문자열 정확 일치**(`PNB-UPGRADE`)이며 필드 ID `customfield_10054`가 바뀌면 조용히 무력화된다.
 - **상태 셋에 없는 상태값은 어느 카드에도 안 잡힌다.** 챕터 대시보드와 달리 스쿼드에는 별도 `보류`/이슈 아님 버킷이 없고, `이슈 아님`은 `DONE_S`(완료)로 분류된다. `보류`·`# 보류` 등 4개 셋(DONE/INPROG/DEPLOY/TODO) 어디에도 없는 상태가 들어오면 카드 합계가 전체 작업 수와 어긋난다.
 - **상태값 추가 시 두 곳 수정 필요:** `DONE_S`/`INPROG_S`/`DEPLOY_S`/`TODO_S` Set과 색상용 `ST_MAP` 모두.
 - **빌드 누락 = 반영 안 됨.** `npm run build` 없이 `netlify deploy --prod`만 하면 `src/App.jsx` 수정이 `dist/` 번들에 반영되지 않는다.
@@ -172,7 +173,7 @@ issueType in subTaskIssueTypes() AND parent in (<작업키들>) ORDER BY parent 
 
 ## 향후 개선 고려사항
 
-- [ ] `PNB-UPGRADE` 제외를 에픽·하위 작업까지 확대할지 결정
+- [x] `PNB-UPGRADE` 제외를 에픽까지 확대 (2026-06-30 완료, 하위작업은 부모 따라 자동 제외)
 - [ ] 상태 분류 셋에 `보류`/`작업 중지` 등 누락 상태 보강 (집계 누수 방지)
 - [ ] 상단 카드와 전체 진행률의 분모 기준(작업만 vs 작업+하위) 표기 일관성 점검
 - [ ] 카테고리 추가 시 `getCategoryFromSummary` + `CAT_C` 색상맵 동시 갱신

@@ -122,7 +122,16 @@ export default function App() {
   useEffect(() => { fetchAll(true); }, []);
 
   // ── 데이터 가공 ────────────────────────────────────────────
-  const epics = (data?.epics || []).map(i => ({
+  // PNB-UPGRADE 라벨이 달린 에픽 → 그 에픽과 하위 전체(작업·하위작업)를 대시보드에서 제외
+  const excludedEpicKeys = new Set(
+    (data?.epics || [])
+      .filter(i => (i.fields.customfield_10054 || []).includes("PNB-UPGRADE"))
+      .map(i => i.key)
+  );
+
+  const epics = (data?.epics || [])
+    .filter(i => !excludedEpicKeys.has(i.key))
+    .map(i => ({
     key: i.key,
     name: getEpicDisplayName(i.fields.summary),
     category: getCategoryFromSummary(i.fields.summary),
@@ -130,7 +139,9 @@ export default function App() {
   }));
 
   const tasks = (data?.tasks || [])
+    // ① 작업에 직접 PNB-UPGRADE가 달렸거나 ② 부모 에픽이 제외 대상이면 제외 (하위작업은 부모 작업과 함께 자동 제외됨)
     .filter(i => !(i.fields.customfield_10054 || []).includes("PNB-UPGRADE"))
+    .filter(i => !excludedEpicKeys.has(i.fields.parent?.key))
     .map(i => ({
       key: i.key,
       epicKey: i.fields.parent?.key || "",

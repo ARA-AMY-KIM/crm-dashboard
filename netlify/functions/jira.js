@@ -56,7 +56,7 @@ exports.handler = async (event) => {
       // 새 데이터 조회
       const epics = await fetchAll(
         "issueType=Epic AND parent=PNB-628 ORDER BY created ASC",
-        ["summary", "status", "assignee"],
+        ["summary", "status", "assignee", "customfield_10054"],
         headers, baseUrl
       );
       const epicKeys = epics.map(i => i.key);
