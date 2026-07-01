@@ -20,7 +20,7 @@ const DONE_S   = new Set(["최종 완료","# 최종 완료","작업 완료","기
 // 진행 중을 3분할: QA 대기 / QA 진행 중 / 나머지 작업 진행 중(기획·디자인·개발)
 const QAWAIT_S = new Set(["# QA 대기"]);
 const QAPROG_S = new Set(["# QA 진행 중"]);
-const WIP_S    = new Set(["# 개발 진행 중","# 디자인 진행 중","# 디자인 대기","# 기획 진행 중","진행 중","디자인 작업 진행 중","디자인 분석"]);
+const WIP_S    = new Set(["# 개발 진행 중","# 개발 대기","# 디자인 진행 중","# 디자인 대기","# 기획 진행 중","진행 중","디자인 작업 진행 중","디자인 분석"]);
 // 하위 호환: 전체 '진행 중' 판정이 필요할 때 사용
 const INPROG_S = new Set([...QAWAIT_S, ...QAPROG_S, ...WIP_S]);
 const DEPLOY_S = new Set(["# 배포 대기"]);
@@ -266,6 +266,7 @@ export default function App() {
           <div style={{textAlign:"right"}}>
             <span style={{fontSize:"28px",fontWeight:800,color:allItems.pct===100?"#16a34a":"#6366f1",lineHeight:1}}>{allItems.pct}%</span>
             <div style={{fontSize:"10px",color:"#94a3b8",marginTop:"1px"}}>{allItems.done} / {allItems.total}</div>
+            <div style={{fontSize:"9px",color:"#cbd5e1",marginTop:"1px"}}>작업 + 하위작업 티켓 기준</div>
           </div>
         </div>
         <div style={{height:"10px",background:"#f1f5f9",borderRadius:"6px",overflow:"hidden",marginBottom:"8px"}}>
@@ -286,20 +287,20 @@ export default function App() {
       {/* 상단 카드 */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:"10px",marginBottom:"16px"}}>
         {[
-          {l:"전체 작업",v:totalTasks,c:"#0ea5e9",sub:"작업 티켓 기준",tip:["전체 작업 티켓"]},
+          {l:"전체 작업 티켓",v:totalTasks,c:"#0ea5e9",sub:"모든 상태값",tip:["모든 상태의 작업 티켓"]},
           {l:"완료",v:doneTasks,c:"#16a34a",sub:"작업완료·최종완료·이슈아님",tip:["# 최종 완료","작업 완료","기획 완료","# 이슈 아님"]},
-          {l:"작업 진행 중",v:wipTasks,c:"#7c3aed",sub:"기획·디자인·개발",tip:["# 기획 진행 중","# 디자인 진행 중","# 디자인 대기","# 개발 진행 중"]},
+          {l:"작업 진행 중",v:wipTasks,c:"#7c3aed",sub:"기획·디자인·개발",tip:["# 기획 진행 중","# 디자인 진행 중","# 디자인 대기","# 개발 진행 중","# 개발 대기"]},
           {l:"QA 대기",v:qaWait,c:"#db2777",sub:"QA 대기",tip:["# QA 대기"]},
           {l:"QA 진행 중",v:qaProg,c:"#2563eb",sub:"QA 진행 중",tip:["# QA 진행 중"]},
           {l:"배포 대기",v:deployWait,c:"#d97706",sub:"배포 대기",tip:["# 배포 대기"]},
           {l:"할 일",v:todoTasks,c:"#94a3b8",sub:"시작 전",tip:["할 일","Backlog"]},
         ].map(s=>{
-          const fk = s.l==="전체 작업" ? null : s.l;
+          const fk = s.l==="전체 작업 티켓" ? null : s.l;
           const active = fk!==null && statusFilter===fk;
           const allActive = fk===null && !statusFilter;
           return (
           <div key={s.l} onClick={()=>setStatusFilter(cur=> fk===null ? null : (cur===fk?null:fk))}
-            style={{background:(active||allActive)?s.c+"14":"#fff",borderRadius:"10px",padding:"12px 14px",border:(active||allActive)?`1.5px solid ${s.c}`:"1px solid #e2e8f0",borderTop:`3px solid ${s.c}`,position:"relative",cursor:"pointer",transition:"background .1s,border-color .1s"}}>
+            style={{background:(active||allActive)?s.c+"14":"#fff",borderRadius:"10px",padding:"12px 14px",borderTop:`3px solid ${s.c}`,borderRight:(active||allActive)?`1.5px solid ${s.c}`:"1px solid #e2e8f0",borderBottom:(active||allActive)?`1.5px solid ${s.c}`:"1px solid #e2e8f0",borderLeft:(active||allActive)?`1.5px solid ${s.c}`:"1px solid #e2e8f0",position:"relative",cursor:"pointer",transition:"background .1s,border-color .1s"}}>
             <Tooltip tips={s.tip} color={s.c}/>
             <div style={{fontSize:"22px",fontWeight:700,color:s.c,lineHeight:1}}>{s.v}</div>
             <div style={{fontSize:"11px",color:"#374151",marginTop:"4px",fontWeight:600}}>{s.l}</div>
