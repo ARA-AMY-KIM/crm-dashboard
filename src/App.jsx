@@ -299,7 +299,7 @@ export default function App() {
           const allActive = fk===null && !statusFilter;
           return (
           <div key={s.l} onClick={()=>setStatusFilter(cur=> fk===null ? null : (cur===fk?null:fk))}
-            style={{background:(active||allActive)?s.c+"0f":"#fff",borderRadius:"10px",padding:"12px 14px",border:"1px solid #e2e8f0",borderTop:`3px solid ${s.c}`,position:"relative",cursor:"pointer",boxShadow:active?`0 0 0 2px ${s.c}`:"none",transition:"box-shadow .1s,background .1s"}}>
+            style={{background:(active||allActive)?s.c+"14":"#fff",borderRadius:"10px",padding:"12px 14px",border:(active||allActive)?`1.5px solid ${s.c}`:"1px solid #e2e8f0",borderTop:`3px solid ${s.c}`,position:"relative",cursor:"pointer",transition:"background .1s,border-color .1s"}}>
             <Tooltip tips={s.tip} color={s.c}/>
             <div style={{fontSize:"22px",fontWeight:700,color:s.c,lineHeight:1}}>{s.v}</div>
             <div style={{fontSize:"11px",color:"#374151",marginTop:"4px",fontWeight:600}}>{s.l}</div>
