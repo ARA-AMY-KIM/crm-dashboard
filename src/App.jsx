@@ -274,15 +274,14 @@ export default function App() {
           </div>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:"16px"}}>
-          <div style={{textAlign:"center",flexShrink:0,minWidth:"66px"}}>
-            <div style={{fontSize:"32px",fontWeight:800,color:allItems.pct===100?"#16a34a":"#6366f1",lineHeight:1}}>{allItems.pct}%</div>
-            <div style={{fontSize:"10px",color:"#94a3b8",marginTop:"3px"}}>완료율</div>
+          <div style={{flexShrink:0}}>
+            <div style={{fontSize:"42px",fontWeight:800,color:allItems.pct===100?"#16a34a":"#6366f1",lineHeight:1}}>{allItems.pct}%</div>
           </div>
           <div style={{flex:1,minWidth:0}}>
             <div style={{height:"10px",background:"#f1f5f9",borderRadius:"6px",overflow:"hidden"}}>
               <div style={{height:"100%",width:`${allItems.pct}%`,background:"linear-gradient(90deg,#6366f1,#8b5cf6)",borderRadius:"6px"}}/>
             </div>
-            <p style={{margin:"8px 0 0",fontSize:"12px",color:"#64748b"}}>{allItems.done} / {allItems.total} 완료 · 에픽 {epics.length}개 · 작업 {totalTasks}개 <span style={{color:"#94a3b8"}}>· 작업+하위 기준</span></p>
+            <p style={{margin:"8px 0 0",fontSize:"12px",color:"#64748b"}}>{allItems.done} / {allItems.total} 완료 · 에픽 {epics.length}개 · 작업 {totalTasks}개 · 하위작업 {allItems.total - totalTasks}개 <span style={{color:"#94a3b8"}}>· 작업+하위 기준</span></p>
           </div>
         </div>
       </div>
