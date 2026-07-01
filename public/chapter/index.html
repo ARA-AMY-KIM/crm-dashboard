@@ -591,7 +591,8 @@ const ss = s => s.replace(/^# /,'');
 const fmt = d => d ? d.slice(0,10) : '';
 
 let RAW = [];
-let curYear = 2026, curMonth = 6;
+const _now = new Date();
+let curYear = _now.getFullYear(), curMonth = _now.getMonth() + 1;
 const F = {proj:'all', who:'all', st:'all'};
 let sortKey = null, sortDir = 'desc';
 let favOnly = false;
@@ -919,9 +920,9 @@ function loadMock(){
     const [y,m]=month.split('-').map(Number);
     if(y&&m&&m>=1&&m<=12){
       curYear=y; curMonth=m;
-      document.getElementById('month-label').textContent=`${y}년 ${m}월`;
     }
   }
+  document.getElementById('month-label').textContent=`${curYear}년 ${curMonth}월`;
 })();
 
 // loadMock();

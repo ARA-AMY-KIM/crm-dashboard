@@ -17,11 +17,19 @@ const getEpicDisplayName = (summary) =>
 
 // ── 상태 판정 ────────────────────────────────────────────────
 const DONE_S   = new Set(["최종 완료","# 최종 완료","작업 완료","기획 완료","디자인 작업 완료","이슈 아님","# 이슈 아님"]);
-const INPROG_S = new Set(["# QA 진행 중","# 개발 진행 중","# 디자인 진행 중","# QA 대기","# 디자인 대기","진행 중","디자인 작업 진행 중","디자인 분석"]);
+// 진행 중을 3분할: QA 대기 / QA 진행 중 / 나머지 작업 진행 중(기획·디자인·개발)
+const QAWAIT_S = new Set(["# QA 대기"]);
+const QAPROG_S = new Set(["# QA 진행 중"]);
+const WIP_S    = new Set(["# 개발 진행 중","# 디자인 진행 중","# 디자인 대기","# 기획 진행 중","진행 중","디자인 작업 진행 중","디자인 분석"]);
+// 하위 호환: 전체 '진행 중' 판정이 필요할 때 사용
+const INPROG_S = new Set([...QAWAIT_S, ...QAPROG_S, ...WIP_S]);
 const DEPLOY_S = new Set(["# 배포 대기"]);
 const TODO_S   = new Set(["할 일","# 할 일","이슈 오픈","Backlog","BACKLOG","백로그"]);
 
 const isDone   = s => DONE_S.has(s);
+const isQaWait = s => QAWAIT_S.has(s);
+const isQaProg = s => QAPROG_S.has(s);
+const isWip    = s => WIP_S.has(s);
 const isInProg = s => INPROG_S.has(s);
 const isDeploy = s => DEPLOY_S.has(s);
 const isTodo   = s => TODO_S.has(s);
@@ -89,6 +97,7 @@ const Tooltip = ({tips, color}) => {
 // ── 메인 ─────────────────────────────────────────────────────
 export default function App() {
   const [cat, setCat] = useState("전체");
+  const [statusFilter, setStatusFilter] = useState(null); // 상태 카드 클릭 필터 (null=전체)
   const [query, setQuery] = useState("");
   const [data, setData] = useState(null);       // { epics, tasks, subtasks }
   const [loading, setLoading] = useState(true);
@@ -182,7 +191,9 @@ export default function App() {
 
   const totalTasks = tasks.length;
   const doneTasks  = tasks.filter(t=>isDone(t.status)).length;
-  const inProg     = tasks.filter(t=>isInProg(t.status)).length;
+  const wipTasks   = tasks.filter(t=>isWip(t.status)).length;      // 작업 진행 중 (기획·디자인·개발)
+  const qaWait     = tasks.filter(t=>isQaWait(t.status)).length;   // QA 대기
+  const qaProg     = tasks.filter(t=>isQaProg(t.status)).length;   // QA 진행 중
   const deployWait = tasks.filter(t=>isDeploy(t.status)).length;
   const todoTasks  = tasks.filter(t=>isTodo(t.status)||t.status==="할 일").length;
 
@@ -199,12 +210,17 @@ export default function App() {
   const categories = [...new Set(epics.map(e=>e.category))];
   // 검색 필터: 티켓명 · 담당자 · 티켓 키
   const q = query.trim().toLowerCase();
+  // 상태 카드 클릭 필터: 카드 라벨 → 상태 판정 함수 ("전체 작업"은 해제)
+  const STATUS_PRED = { "완료":isDone, "작업 진행 중":isWip, "QA 대기":isQaWait, "QA 진행 중":isQaProg, "배포 대기":isDeploy, "할 일":isTodo };
+  const statusPass = (st) => !statusFilter || (STATUS_PRED[statusFilter] ? STATUS_PRED[statusFilter](st) : true);
   const filteredEpics = epics.filter(e => {
     if (cat !== "전체" && e.category !== cat) return false;
-    if (!q) return true;
-    // 에픽 하위 작업 티켓 중 하나라도 검색어에 매칭되면 에픽 표시
+    if (!q && !statusFilter) return true;
+    // 검색어 또는 상태 필터가 있으면, 조건을 통과하는 작업이 하나라도 있는 에픽만 표시
     const epicTasks = tasks.filter(t => t.epicKey === e.key);
     return epicTasks.some(t => {
+      if (!statusPass(t.status)) return false;
+      if (!q) return true;
       const taskHit = t.name.toLowerCase().includes(q) || t.key.toLowerCase().includes(q) || t.assignee.toLowerCase().includes(q);
       const subHit = (subtaskMap[t.key]||[]).some(s =>
         s.name.toLowerCase().includes(q) || s.key.toLowerCase().includes(q) || s.assignee.toLowerCase().includes(q)
@@ -268,21 +284,29 @@ export default function App() {
       </div>
 
       {/* 상단 카드 */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:"10px",marginBottom:"16px"}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:"10px",marginBottom:"16px"}}>
         {[
           {l:"전체 작업",v:totalTasks,c:"#0ea5e9",sub:"작업 티켓 기준",tip:["전체 작업 티켓"]},
-          {l:"완료",v:doneTasks,c:"#16a34a",sub:"작업완료·최종완료·이슈아님",tip:["# 최종 완료","# 이슈 아님"]},
-          {l:"진행 중",v:inProg,c:"#4f46e5",sub:"기획·디자인·개발·QA",tip:["# QA 진행 중","# 개발 진행 중","# 디자인 진행 중","# QA 대기","# 디자인 대기"]},
+          {l:"완료",v:doneTasks,c:"#16a34a",sub:"작업완료·최종완료·이슈아님",tip:["# 최종 완료","작업 완료","기획 완료","# 이슈 아님"]},
+          {l:"작업 진행 중",v:wipTasks,c:"#7c3aed",sub:"기획·디자인·개발",tip:["# 기획 진행 중","# 디자인 진행 중","# 디자인 대기","# 개발 진행 중"]},
+          {l:"QA 대기",v:qaWait,c:"#db2777",sub:"QA 대기",tip:["# QA 대기"]},
+          {l:"QA 진행 중",v:qaProg,c:"#2563eb",sub:"QA 진행 중",tip:["# QA 진행 중"]},
           {l:"배포 대기",v:deployWait,c:"#d97706",sub:"배포 대기",tip:["# 배포 대기"]},
           {l:"할 일",v:todoTasks,c:"#94a3b8",sub:"시작 전",tip:["할 일","Backlog"]},
-        ].map(s=>(
-          <div key={s.l} style={{background:"#fff",borderRadius:"10px",padding:"12px 14px",border:"1px solid #e2e8f0",borderTop:`3px solid ${s.c}`,position:"relative"}}>
+        ].map(s=>{
+          const fk = s.l==="전체 작업" ? null : s.l;
+          const active = fk!==null && statusFilter===fk;
+          const allActive = fk===null && !statusFilter;
+          return (
+          <div key={s.l} onClick={()=>setStatusFilter(cur=> fk===null ? null : (cur===fk?null:fk))}
+            style={{background:(active||allActive)?s.c+"0f":"#fff",borderRadius:"10px",padding:"12px 14px",border:"1px solid #e2e8f0",borderTop:`3px solid ${s.c}`,position:"relative",cursor:"pointer",boxShadow:active?`0 0 0 2px ${s.c}`:"none",transition:"box-shadow .1s,background .1s"}}>
             <Tooltip tips={s.tip} color={s.c}/>
             <div style={{fontSize:"22px",fontWeight:700,color:s.c,lineHeight:1}}>{s.v}</div>
             <div style={{fontSize:"11px",color:"#374151",marginTop:"4px",fontWeight:600}}>{s.l}</div>
             <div style={{fontSize:"9px",color:"#cbd5e1",marginTop:"2px"}}>{s.sub}</div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* 검색창 */}
@@ -331,7 +355,9 @@ export default function App() {
           });
           const total = filtered.length;
           const done = filtered.filter(t=>isDone(t.status)).length;
-          const inP  = filtered.filter(t=>isInProg(t.status)).length;
+          const wip  = filtered.filter(t=>isWip(t.status)).length;
+          const qw   = filtered.filter(t=>isQaWait(t.status)).length;
+          const qp   = filtered.filter(t=>isQaProg(t.status)).length;
           const dep  = filtered.filter(t=>isDeploy(t.status)).length;
           const todo = filtered.filter(t=>isTodo(t.status)||t.status==="할 일").length;
           return (
@@ -340,7 +366,9 @@ export default function App() {
               <div style={{width:"1px",height:"14px",background:"#e2e8f0"}}/>
               {[
                 {label:"완료",val:done,c:"#16a34a"},
-                {label:"진행 중",val:inP,c:"#4f46e5"},
+                {label:"작업 진행 중",val:wip,c:"#7c3aed"},
+                {label:"QA 대기",val:qw,c:"#db2777"},
+                {label:"QA 진행 중",val:qp,c:"#2563eb"},
                 {label:"배포 대기",val:dep,c:"#d97706"},
                 {label:"할 일",val:todo,c:"#94a3b8"},
               ].map(s=>(
@@ -359,12 +387,13 @@ export default function App() {
       <div style={{display:"flex",flexDirection:"column",gap:"10px"}}>
         {filteredEpics.length === 0 && (
           <div style={{background:"#fff",borderRadius:"12px",padding:"40px",textAlign:"center",border:"1px solid #e2e8f0",color:"#94a3b8",fontSize:"13px"}}>
-            {q ? `"${query}" 에 해당하는 티켓이 없습니다.` : "해당하는 에픽이 없습니다."}
+            {q ? `"${query}" 에 해당하는 티켓이 없습니다.` : (statusFilter ? `'${statusFilter}' 상태의 티켓이 없습니다.` : "해당하는 에픽이 없습니다.")}
           </div>
         )}
         {filteredEpics.map(epic => {
           const epicTasks = tasks.filter(t => {
             if (t.epicKey !== epic.key) return false;
+            if (!statusPass(t.status)) return false;
             if (!q) return true;
             const taskHit = t.name.toLowerCase().includes(q) || t.key.toLowerCase().includes(q) || t.assignee.toLowerCase().includes(q);
             const subHit = (subtaskMap[t.key]||[]).some(s =>
