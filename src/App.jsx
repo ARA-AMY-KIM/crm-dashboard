@@ -281,7 +281,7 @@ export default function App() {
             <div style={{height:"10px",background:"#f1f5f9",borderRadius:"6px",overflow:"hidden"}}>
               <div style={{height:"100%",width:`${allItems.pct}%`,background:"linear-gradient(90deg,#6366f1,#8b5cf6)",borderRadius:"6px"}}/>
             </div>
-            <p style={{margin:"8px 0 0",fontSize:"12px",color:"#64748b"}}>{allItems.done} / {allItems.total} 완료 · 에픽 {epics.length}개 · 작업 {totalTasks}개 · 하위작업 {allItems.total - totalTasks}개 <span style={{color:"#94a3b8"}}>· 작업+하위 기준</span></p>
+            <p style={{margin:"8px 0 0",fontSize:"12px",color:"#64748b"}}>{allItems.done} / {allItems.total} 완료 · 에픽 {epics.length}개 · 작업 {totalTasks}개 · 하위작업 {allItems.total - totalTasks}개</p>
           </div>
         </div>
       </div>
