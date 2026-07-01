@@ -257,30 +257,33 @@ export default function App() {
 
       {/* Header + 전체 진행률 */}
       <div style={{marginBottom:"16px",background:"#fff",borderRadius:"14px",padding:"16px 20px",border:"1px solid #e2e8f0",boxShadow:"0 1px 4px rgba(0,0,0,0.04)"}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"10px"}}>
-          <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
-            <div style={{width:"5px",height:"26px",background:"linear-gradient(180deg,#6366f1,#8b5cf6)",borderRadius:"3px"}}/>
-            <JLink k="PNB-628"><span style={{fontSize:"11px",color:"#6366f1",background:"#eef2ff",padding:"2px 8px",borderRadius:"20px",fontWeight:600}}>PNB-628</span></JLink>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"10px",marginBottom:"12px"}}>
+          <div style={{display:"flex",alignItems:"center",gap:"10px",minWidth:0}}>
+            <div style={{width:"5px",height:"26px",background:"linear-gradient(180deg,#6366f1,#8b5cf6)",borderRadius:"3px",flexShrink:0}}/>
+            <JLink k="PNB-628"><span style={{fontSize:"11px",color:"#6366f1",background:"#eef2ff",padding:"2px 8px",borderRadius:"20px",fontWeight:600,whiteSpace:"nowrap"}}>PNB-628</span></JLink>
             <h1 style={{margin:0,fontSize:"19px",fontWeight:700,color:"#0f172a"}}>CRM Admin 신규 구축 - 작업 현황</h1>
           </div>
-          <div style={{textAlign:"right"}}>
-            <span style={{fontSize:"28px",fontWeight:800,color:allItems.pct===100?"#16a34a":"#6366f1",lineHeight:1}}>{allItems.pct}%</span>
-            <div style={{fontSize:"10px",color:"#94a3b8",marginTop:"1px"}}>{allItems.done} / {allItems.total}</div>
-            <div style={{fontSize:"9px",color:"#cbd5e1",marginTop:"1px"}}>작업 + 하위작업 티켓 기준</div>
+          <div style={{display:"flex",alignItems:"center",gap:"8px",flexShrink:0}}>
+            {loading
+              ? <span style={{fontSize:"10px",color:"#6366f1"}}>⟳ 불러오는 중...</span>
+              : error
+                ? <span style={{fontSize:"10px",color:"#ef4444"}}>{error}</span>
+                : <span style={{fontSize:"10px",color:"#22c55e"}}>✓ {lastUpdated}</span>
+            }
+            <button onClick={()=>fetchAll(true)} disabled={loading} style={{fontSize:"10px",color:"#6366f1",background:"#eef2ff",border:"none",borderRadius:"6px",padding:"2px 8px",cursor:"pointer",whiteSpace:"nowrap"}}>새로고침</button>
           </div>
         </div>
-        <div style={{height:"10px",background:"#f1f5f9",borderRadius:"6px",overflow:"hidden",marginBottom:"8px"}}>
-          <div style={{height:"100%",width:`${allItems.pct}%`,background:"linear-gradient(90deg,#6366f1,#8b5cf6)",borderRadius:"6px"}}/>
-        </div>
-        <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
-          <p style={{margin:0,fontSize:"11px",color:"#94a3b8"}}>에픽 {epics.length}개 · 작업 티켓 {totalTasks}개 · 하위작업 포함 전체 {allItems.total}개 기준</p>
-          {loading
-            ? <span style={{fontSize:"10px",color:"#6366f1"}}>⟳ 불러오는 중...</span>
-            : error
-              ? <span style={{fontSize:"10px",color:"#ef4444"}}>{error}</span>
-              : <span style={{fontSize:"10px",color:"#22c55e"}}>✓ {lastUpdated}</span>
-          }
-          <button onClick={()=>fetchAll(true)} disabled={loading} style={{fontSize:"10px",color:"#6366f1",background:"#eef2ff",border:"none",borderRadius:"6px",padding:"2px 8px",cursor:"pointer"}}>새로고침</button>
+        <div style={{display:"flex",alignItems:"center",gap:"16px"}}>
+          <div style={{textAlign:"center",flexShrink:0,minWidth:"66px"}}>
+            <div style={{fontSize:"32px",fontWeight:800,color:allItems.pct===100?"#16a34a":"#6366f1",lineHeight:1}}>{allItems.pct}%</div>
+            <div style={{fontSize:"10px",color:"#94a3b8",marginTop:"3px"}}>완료율</div>
+          </div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{height:"10px",background:"#f1f5f9",borderRadius:"6px",overflow:"hidden"}}>
+              <div style={{height:"100%",width:`${allItems.pct}%`,background:"linear-gradient(90deg,#6366f1,#8b5cf6)",borderRadius:"6px"}}/>
+            </div>
+            <p style={{margin:"8px 0 0",fontSize:"12px",color:"#64748b"}}>{allItems.done} / {allItems.total} 완료 · 에픽 {epics.length}개 · 작업 {totalTasks}개 <span style={{color:"#94a3b8"}}>· 작업+하위 기준</span></p>
+          </div>
         </div>
       </div>
 
@@ -302,9 +305,9 @@ export default function App() {
           <div key={s.l} onClick={()=>setStatusFilter(cur=> fk===null ? null : (cur===fk?null:fk))}
             style={{background:(active||allActive)?s.c+"14":"#fff",borderRadius:"10px",padding:"12px 14px",borderTop:`3px solid ${s.c}`,borderRight:(active||allActive)?`1.5px solid ${s.c}`:"1px solid #e2e8f0",borderBottom:(active||allActive)?`1.5px solid ${s.c}`:"1px solid #e2e8f0",borderLeft:(active||allActive)?`1.5px solid ${s.c}`:"1px solid #e2e8f0",position:"relative",cursor:"pointer",transition:"background .1s,border-color .1s"}}>
             <Tooltip tips={s.tip} color={s.c}/>
-            <div style={{fontSize:"22px",fontWeight:700,color:s.c,lineHeight:1}}>{s.v}</div>
-            <div style={{fontSize:"11px",color:"#374151",marginTop:"4px",fontWeight:600}}>{s.l}</div>
-            <div style={{fontSize:"9px",color:"#cbd5e1",marginTop:"2px"}}>{s.sub}</div>
+            <div style={{fontSize:"28px",fontWeight:700,color:s.c,lineHeight:1}}>{s.v}</div>
+            <div style={{fontSize:"13px",color:"#334155",marginTop:"5px",fontWeight:600}}>{s.l}</div>
+            <div style={{fontSize:"11px",color:"#64748b",marginTop:"3px"}}>{s.sub}</div>
           </div>
           );
         })}
