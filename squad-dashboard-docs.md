@@ -170,6 +170,30 @@ issueType in subTaskIssueTypes() AND parent in (<작업키들>) ORDER BY parent 
 - **상태 카드 클릭 필터** (2026-06-30): 카드를 누르면 해당 상태의 작업 티켓만 목록에 표시(하위작업은 부모 작업 따라 함께 노출). 카테고리·검색과 AND로 조합. 같은 카드 재클릭 시 해제, "전체 작업" 카드 = 상태 필터 해제. 카드 숫자 자체는 전체 개요로 고정(필터와 무관), 활성 카드는 테두리 강조. `statusFilter` state + `STATUS_PRED`(라벨→판정함수) + `statusPass()`로 구현.
 - 모든 티켓 링크는 `https://ajnetworks.atlassian.net/browse/<KEY>`로 연결
 
+### URL 파라미터 (필터 상태 공유 링크, 2026-07-01)
+현재 카테고리·상태·검색 필터 상태가 URL 쿼리에 자동 반영되고(`history.replaceState`, 히스토리 미오염), 그 URL을 열면 해당 상태로 복원된다. 필터 공유·북마크용.
+
+| 파라미터 | 값 | 예시 |
+|---|---|---|
+| `cat` | 카테고리명(한글 원문) | `?cat=상품 관리` |
+| `status` | 상태 카드 **영문 코드**(아래 표) | `?status=qa-progress` |
+| `q` | 검색어(원문) | `?q=김아라` |
+
+**status 코드 매핑** (`STATUS_CODE` / `CODE_STATUS`):
+
+| 카드 | 코드 |
+|---|---|
+| 완료 | `done` |
+| 작업 진행 중 (WIP=Work In Progress) | `wip` |
+| QA 대기 | `qa-wait` |
+| QA 진행 중 | `qa-progress` |
+| 배포 대기 | `deploy` |
+| 할 일 | `todo` |
+
+- 조합 가능: `?cat=상품 관리&status=done&q=...` (세 필터 AND).
+- 기본값(전체/필터없음)인 파라미터는 URL에서 생략됨. 유효하지 않은 `status` 코드는 무시하고 전체로 엶.
+- 상태 카드를 추가/변경하면 `STATUS_CODE` 한 곳만 갱신하면 URL 코드까지 자동 반영됨.
+
 ---
 
 ## 알려진 함정 / 주의사항

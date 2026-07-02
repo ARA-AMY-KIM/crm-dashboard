@@ -57,6 +57,9 @@ const ss = s => s.replace(/^# /,"");
 const CAT_C  = {"공통":"#0ea5e9","어드민 운영":"#8b5cf6","업체 관리":"#f59e0b","상품 관리":"#ef4444","운영 관리":"#10b981","개발 설정":"#0891b2","시스템 관리":"#ef4444","기타":"#94a3b8"};
 // 카테고리 칩 고정 정렬 순서 (목록에 없는 카테고리는 뒤에 자동 추가)
 const CAT_ORDER = ["업체 관리","상품 관리","운영 관리","개발 설정","어드민 운영","공통","기타"];
+// 상태 카드 클릭 필터 ↔ URL ?status= 영문 코드 매핑
+const STATUS_CODE = {"완료":"done","작업 진행 중":"wip","QA 대기":"qa-wait","QA 진행 중":"qa-progress","배포 대기":"deploy","할 일":"todo"};
+const CODE_STATUS = Object.fromEntries(Object.entries(STATUS_CODE).map(([k,v])=>[v,k]));
 const TYPE_C = {"Planning":"#0ea5e9","BE":"#f97316","FE":"#10b981","Design":"#a855f7","QA":"#3b82f6","bug(QA)":"#ef4444"};
 
 const fmt = d => d ? d.slice(0,10) : "";
@@ -100,9 +103,10 @@ const Tooltip = ({tips, color}) => {
 
 // ── 메인 ─────────────────────────────────────────────────────
 export default function App() {
-  const [cat, setCat] = useState("전체");
-  const [statusFilter, setStatusFilter] = useState(null); // 상태 카드 클릭 필터 (null=전체)
-  const [query, setQuery] = useState("");
+  const _p0 = new URLSearchParams(window.location.search);
+  const [cat, setCat] = useState(_p0.get("cat") || "전체");
+  const [statusFilter, setStatusFilter] = useState(CODE_STATUS[_p0.get("status")] || null); // 상태 카드 클릭 필터 (URL ?status= 영문 코드로 고정)
+  const [query, setQuery] = useState(_p0.get("q") || "");
   const [data, setData] = useState(null);       // { epics, tasks, subtasks }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -133,6 +137,16 @@ export default function App() {
   };
 
   useEffect(() => { fetchAll(true); }, []);
+
+  // 현재 필터 상태를 URL 파라미터로 동기화 (카드/카테고리/검색 고정 링크 공유용)
+  useEffect(() => {
+    const p = new URLSearchParams();
+    if (cat !== "전체") p.set("cat", cat);
+    if (statusFilter) p.set("status", STATUS_CODE[statusFilter]);
+    if (query.trim()) p.set("q", query.trim());
+    const qs = p.toString();
+    window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
+  }, [cat, statusFilter, query]);
 
   // ── 데이터 가공 ────────────────────────────────────────────
   // PNB-UPGRADE 라벨이 달린 에픽 → 그 에픽과 하위 전체(작업·하위작업)를 대시보드에서 제외
