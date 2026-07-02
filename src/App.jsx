@@ -7,7 +7,9 @@ const getCategoryFromSummary = (summary) => {
   if (summary.includes("[공통]")) return "공통";
   if (summary.includes("[어드민 운영]")) return "어드민 운영";
   if (summary.includes("[업체 관리]")) return "업체 관리";
+  if (summary.includes("[상품 관리]")) return "상품 관리";
   if (summary.includes("[운영 관리]")) return "운영 관리";
+  if (summary.includes("[개발 설정]")) return "개발 설정";
   if (summary.includes("[시스템 관리]")) return "시스템 관리";
   return "기타";
 };
@@ -52,7 +54,9 @@ const gs = s => ST_MAP[s] || {c:"#94a3b8",bg:"#f1f5f9"};
 const ss = s => s.replace(/^# /,"");
 
 // ── 카테고리/타입 색상 ────────────────────────────────────────
-const CAT_C  = {"공통":"#0ea5e9","어드민 운영":"#8b5cf6","업체 관리":"#f59e0b","운영 관리":"#10b981","시스템 관리":"#ef4444","기타":"#94a3b8"};
+const CAT_C  = {"공통":"#0ea5e9","어드민 운영":"#8b5cf6","업체 관리":"#f59e0b","상품 관리":"#ef4444","운영 관리":"#10b981","개발 설정":"#0891b2","시스템 관리":"#ef4444","기타":"#94a3b8"};
+// 카테고리 칩 고정 정렬 순서 (목록에 없는 카테고리는 뒤에 자동 추가)
+const CAT_ORDER = ["업체 관리","상품 관리","운영 관리","개발 설정","어드민 운영","공통","기타"];
 const TYPE_C = {"Planning":"#0ea5e9","BE":"#f97316","FE":"#10b981","Design":"#a855f7","QA":"#3b82f6","bug(QA)":"#ef4444"};
 
 const fmt = d => d ? d.slice(0,10) : "";
@@ -207,7 +211,8 @@ export default function App() {
     return total===0?0:Math.round(done/total*100);
   };
 
-  const categories = [...new Set(epics.map(e=>e.category))];
+  const catsPresent = new Set(epics.map(e=>e.category));
+  const categories = [...CAT_ORDER.filter(c=>catsPresent.has(c)), ...[...catsPresent].filter(c=>!CAT_ORDER.includes(c))];
   // 검색 필터: 티켓명 · 담당자 · 티켓 키
   const q = query.trim().toLowerCase();
   // 상태 카드 클릭 필터: 카드 라벨 → 상태 판정 함수 ("전체 작업"은 해제)
