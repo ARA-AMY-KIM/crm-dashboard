@@ -343,7 +343,7 @@ tr.fav-row:hover{background:#fff3c4;}
         <div class="info-section-title">대상 티켓</div>
         <ul>
           <li>프로젝트 : CRM / PNB / CON</li>
-          <li>담당자 : 김아라 · 이동희 · 이성주 · 장은주 · 최세영</li>
+          <li>담당자 : 김아라 · 이동희 · 이성주 · 장은주 · 최세영 · 이예원</li>
           <li>티켓 타입 : 작업 티켓 + Plan 티켓 포함</li>
         </ul>
       </div>
@@ -463,6 +463,7 @@ tr.fav-row:hover{background:#fff3c4;}
         <button class="chip"    data-f="who" data-v="이성주" onclick="sf('who','이성주',this)">이성주</button>
         <button class="chip"    data-f="who" data-v="장은주" onclick="sf('who','장은주',this)">장은주</button>
         <button class="chip"    data-f="who" data-v="최세영" onclick="sf('who','최세영',this)">최세영</button>
+        <button class="chip"    data-f="who" data-v="이예원" onclick="sf('who','이예원',this)">이예원</button>
       </div>
     </div>
     <span class="tdiv"></span>
@@ -911,7 +912,7 @@ function loadMock(){
 (function applyUrlParams(){
   const params=new URLSearchParams(window.location.search);
   const who=params.get('who');
-  if(who&&['김아라','이동희','이성주','장은주','최세영'].includes(who)){
+  if(who&&['김아라','이동희','이성주','장은주','최세영','이예원'].includes(who)){
     F.who=who;
     document.querySelectorAll('[data-f="who"]').forEach(c=>c.classList.toggle('on',c.dataset.v===who));
   }

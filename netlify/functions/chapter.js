@@ -4,7 +4,7 @@ let cacheTime = null;
 const CACHE_TTL = 10 * 60 * 1000; // 10분
 
 // ── 담당자 필터 (Jira displayName 기준) ─────────────────────
-const TARGET_ASSIGNEES = ["김아라", "이동희", "이성주", "장은주", "최세영"];
+const TARGET_ASSIGNEES = ["김아라", "이동희", "이성주", "장은주", "최세영", "이예원"];
 
 // ── 페이지네이션 포함 전체 조회 ──────────────────────────────
 const fetchAll = async (jql, fields, headers, baseUrl) => {

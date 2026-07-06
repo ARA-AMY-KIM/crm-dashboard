@@ -77,7 +77,7 @@ GET /.netlify/functions/chapter?type=refresh   # 캐시 초기화
 ```
 
 ### 대상 담당자
-`TARGET_ASSIGNEES = ["김아라", "이동희", "이성주", "장은주", "최세영"]` (Jira displayName 기준)
+`TARGET_ASSIGNEES = ["김아라", "이동희", "이성주", "장은주", "최세영", "이예원"]` (Jira displayName 기준, 2026-07-01 이예원 추가)
 
 ### 조회 대상
 
