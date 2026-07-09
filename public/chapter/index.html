@@ -336,7 +336,7 @@ tr.fav-row:hover{background:#fff3c4;}
         </svg>
         <div>
           <div style="font-size:15px;font-weight:700;color:#1b1e30;line-height:1.2;">대시보드 이용 안내</div>
-          <div style="font-size:11px;color:#94a3b8;margin-top:2px;">CRM 기획챕터 · Jira 연동 · 2026.06.16 배포</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:2px;">CRM 기획챕터 · Jira 연동 · 2026.07.09 업데이트</div>
         </div>
       </div>
       <div class="info-section">
@@ -366,8 +366,8 @@ tr.fav-row:hover{background:#fff3c4;}
         <ul>
           <li>작업 티켓 바로 아래 들여쓰기로 표시되며, 구분 열에 점(●) + Plan 텍스트로 구분됩니다.</li>
           <li>상태 필터와 카운트는 작업 티켓 기준으로만 적용됩니다. Plan 티켓은 작업 티켓에 세트로 따라옵니다.</li>
-          <li>Plan 티켓 담당자가 5인 내이면 검색 및 담당자 필터에 동일하게 적용됩니다.</li>
-          <li>상위 작업 담당자가 5인 외일 경우, 해당 작업 티켓은 목록에 노출되지만 필터·카운트에는 포함되지 않으며 흐리게 표시됩니다.</li>
+          <li>Plan 티켓 담당자가 담당자 명단에 있으면 검색 및 담당자 필터에 동일하게 적용됩니다.</li>
+          <li>상위 작업 담당자가 담당자 명단 밖이면, 해당 작업 티켓은 목록에 노출되지만 필터·카운트에는 포함되지 않으며 흐리게 표시됩니다.</li>
           <li>하나의 작업 티켓에 여러 Plan 티켓이 연결될 수 있습니다.</li>
           <li>테이블 상단 'Plan 티켓 같이 보기' 토글로 표시 여부를 선택할 수 있습니다.</li>
         </ul>
@@ -415,6 +415,8 @@ tr.fav-row:hover{background:#fff3c4;}
         <ul>
           <li>상단 ‹ › 버튼으로 월 이동 가능, '이번 달' 버튼으로 현재 월로 즉시 이동</li>
           <li>프로젝트 / 담당자 / 상태 필터 및 키워드 검색 지원 (티켓명 · 담당자 · 티켓 키)</li>
+          <li>테이블 상단 '완료·보류 숨기기' 토글을 켜면 최종 완료 및 이슈 아님(보류) 상태의 작업 티켓(하위 Plan 포함)이 제외되어 진행 중인 작업만 표시됩니다. 이때 상태 필터의 '완료'·'이슈 아님'은 비활성화됩니다.</li>
+          <li>'Plan 같이 보기' · '완료·보류 숨기기' · 즐겨찾기 설정은 브라우저에 저장되어 다음 방문에도 유지됩니다.</li>
           <li>기한/완료일 · 업데이트일 기준 정렬 가능 (헤더 클릭, 3회 클릭 시 초기화)</li>
           <li>데이터는 10분 캐싱 적용 (하단 강제 새로고침으로 즉시 반영 가능)</li>
         </ul>
@@ -510,6 +512,14 @@ tr.fav-row:hover{background:#fff3c4;}
             <span class="toggle-label active" id="plan-toggle-label" onclick="document.getElementById('plan-toggle').click()">Plan 같이 보기</span>
           </div>
           <div style="width:1px;height:14px;background:var(--border);"></div>
+          <div class="toggle-wrap">
+            <label class="toggle-switch">
+              <input type="checkbox" id="hide-inactive-toggle" onchange="toggleHideInactive(this)">
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label" id="hide-inactive-label" onclick="document.getElementById('hide-inactive-toggle').click()">완료·보류 숨기기</span>
+          </div>
+          <div style="width:1px;height:14px;background:var(--border);"></div>
           <button id="fav-filter-btn" onclick="toggleFavFilter()"
             style="background:none;border:none;cursor:pointer;padding:2px;display:flex;align-items:center;flex-shrink:0;transition:all .15s;"
             title="내 즐겨찾기">
@@ -597,7 +607,8 @@ let curYear = _now.getFullYear(), curMonth = _now.getMonth() + 1;
 const F = {proj:'all', who:'all', st:'all'};
 let sortKey = null, sortDir = 'desc';
 let favOnly = false;
-let showPlan = true;
+let showPlan = localStorage.getItem('chapter_showPlan') !== 'false';
+let hideInactive = localStorage.getItem('chapter_hideInactive') === 'true';
 
 const FAVS = new Set(JSON.parse(localStorage.getItem('chapter_favs') || '[]'));
 function saveFavs(){ localStorage.setItem('chapter_favs', JSON.stringify([...FAVS])); }
@@ -638,9 +649,34 @@ function toggleFavFilter(){
 
 function togglePlan(checkbox){
   showPlan = checkbox.checked;
+  localStorage.setItem('chapter_showPlan', showPlan);
   const label = document.getElementById('plan-toggle-label');
   if(label) label.classList.toggle('active', showPlan);
   render();
+}
+
+function toggleHideInactive(checkbox){
+  hideInactive = checkbox.checked;
+  localStorage.setItem('chapter_hideInactive', hideInactive);
+  const label = document.getElementById('hide-inactive-label');
+  if(label) label.classList.toggle('active', hideInactive);
+  // 완료/이슈 아님 상태 칩이 선택돼 있으면 전체로 되돌림 (토글과 충돌 방지)
+  if(hideInactive && (F.st==='done' || F.st==='noissue')){
+    F.st='all';
+    document.querySelectorAll('[data-f="st"]').forEach(c=>c.classList.toggle('on', c.dataset.v==='all'));
+  }
+  updateStatusChipsDisabled();
+  render();
+}
+
+function updateStatusChipsDisabled(){
+  document.querySelectorAll('[data-f="st"]').forEach(c=>{
+    if(c.dataset.v==='done' || c.dataset.v==='noissue'){
+      c.disabled = hideInactive;
+      c.style.opacity = hideInactive ? '0.35' : '';
+      c.style.cursor  = hideInactive ? 'not-allowed' : '';
+    }
+  });
 }
 
 function sf(type,val,el){
@@ -721,6 +757,9 @@ function passFilter(r){
     );
     if(!taskStMatch) return false;
   }
+
+  // '완료·보류 숨기기' 토글: task 기준 최종 완료 / 이슈 아님(보류) 제외
+  if(hideInactive && (isDone(r.status) || isNoIssue(r.status))) return false;
 
   const q=(document.getElementById('q')?.value||'').trim().toLowerCase();
   if(q){
@@ -883,7 +922,8 @@ async function loadData(force=false){
     setStatus('ok','✓ '+ts);
   } catch(e){
     setStatus('err','로드 실패: '+e.message);
-    loadMock();
+    const wrap=document.getElementById('table-body-wrap');
+    if(wrap) wrap.innerHTML='<div class="state-box"><span style="color:var(--text-dim);font-size:13px;">데이터를 불러오지 못했습니다. 잠시 후 새로고침해 주세요.</span></div>';
   }
 }
 
@@ -897,17 +937,6 @@ function setStatus(type,msg){
 
 function softRefresh(){ loadData(false); }
 function forceRefresh(){ loadData(true); }
-
-function loadMock(){
-  RAW=[
-    {key:'PNB-666',proj:'PNB',name:'GNB/SNB 구조 개편',assignee:'김아라',isTargetAssignee:true,status:'기획 완료',resolutiondate:'2026-06-10',duedate:'2026-07-09',created:'2026-05-01',updated:'2026-06-10',linkedCrm:[],plans:[{key:'PNB-733',proj:'PNB',name:'IA 설계',assignee:'김아라',status:'기획 완료',resolutiondate:'2026-06-08',duedate:'',created:'2026-05-10',updated:'2026-06-08'}]},
-    {key:'CRM-5875',proj:'CRM',name:'다이렉트 자보 데이터 하드 딜리트 처리',assignee:'김아라',isTargetAssignee:true,status:'할 일',resolutiondate:'',duedate:'2026-06-01',created:'2026-05-28',updated:'2026-06-01',linkedCrm:[],plans:[]},
-    {key:'CRM-5880',proj:'CRM',name:'보류 세부유형 관리 페이지',assignee:'최세영',isTargetAssignee:true,status:'진행 중',resolutiondate:'',duedate:'',created:'2026-06-01',updated:'2026-06-01',linkedCrm:[],plans:[{key:'CRM-5881',proj:'CRM',name:'UI 명세 작성',assignee:'최세영',status:'요구사항 분석',resolutiondate:'',duedate:'2026-06-15',created:'2026-06-02',updated:'2026-06-05'},{key:'CRM-5882',proj:'CRM',name:'컴포넌트 설계',assignee:'김아라',status:'할 일',resolutiondate:'',duedate:'2026-06-20',created:'2026-06-03',updated:'2026-06-03'}]},
-    {key:'PNB-899',proj:'PNB',name:'신규 페이지 개발 - 홈 (mvp ver.)',assignee:'김아라',isTargetAssignee:true,status:'진행 중',resolutiondate:'',duedate:'2026-07-09',created:'2026-06-03',updated:'2026-06-03',linkedCrm:[],plans:[]},
-  ];
-  render();
-  setStatus('ok','목업 데이터');
-}
 
 (function applyUrlParams(){
   const params=new URLSearchParams(window.location.search);
@@ -924,9 +953,15 @@ function loadMock(){
     }
   }
   document.getElementById('month-label').textContent=`${curYear}년 ${curMonth}월`;
+
+  // 토글 상태 복원 (localStorage)
+  const _planTgl=document.getElementById('plan-toggle');
+  if(_planTgl){ _planTgl.checked=showPlan; document.getElementById('plan-toggle-label').classList.toggle('active', showPlan); }
+  const _hiTgl=document.getElementById('hide-inactive-toggle');
+  if(_hiTgl){ _hiTgl.checked=hideInactive; document.getElementById('hide-inactive-label').classList.toggle('active', hideInactive); }
+  updateStatusChipsDisabled();
 })();
 
-// loadMock();
 loadData();
 </script>
 </body>
