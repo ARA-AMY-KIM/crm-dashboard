@@ -52,7 +52,8 @@ main{max-width:1300px;margin:0 auto;padding:20px 24px 60px;}
 .today-btn{display:inline-flex;align-items:center;background:rgba(255,255,255,0.15);border:none;color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-family:var(--font);font-weight:500;cursor:pointer;transition:all .12s;white-space:nowrap;}
 .today-btn:hover{background:rgba(255,255,255,0.25);}
 .month-hint{font-size:11px;color:rgba(255,255,255,0.8);flex:1;}
-.info-btn{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .12s;}
+@keyframes ring{0%{transform:rotate(0)}10%{transform:rotate(18deg)}20%{transform:rotate(-16deg)}30%{transform:rotate(14deg)}40%{transform:rotate(-10deg)}50%{transform:rotate(7deg)}60%{transform:rotate(-4deg)}70%{transform:rotate(2deg)}80%{transform:rotate(-1deg)}100%{transform:rotate(0)}}
+.info-btn{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .12s;transform-origin:top center;animation:ring 2.5s ease-in-out infinite;}
 .info-btn:hover{background:rgba(255,255,255,0.3);}
 
 /* STATUS CARDS */
@@ -62,6 +63,7 @@ main{max-width:1300px;margin:0 auto;padding:20px 24px 60px;}
 .card.on{border-color:var(--indigo-b);background:var(--indigo-bg);}
 .card-num{font-size:26px;font-weight:700;line-height:1.1;}
 .card-lbl{font-size:12px;color:var(--text-sub);font-weight:500;margin-top:2px;}
+.card-sub{font-size:10px;color:var(--text-dim);margin-top:2px;}
 
 /* TOOLBAR */
 .toolbar{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;box-shadow:var(--sh);}
@@ -85,6 +87,8 @@ main{max-width:1300px;margin:0 auto;padding:20px 24px 60px;}
 .thead-title{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;}
 .thead-cnt{font-size:11px;color:var(--text-dim);background:var(--white);border:1px solid var(--border);padding:1px 7px;border-radius:20px;font-family:var(--mono);white-space:nowrap;}
 .cnt-sep{width:1px;height:14px;background:var(--border);flex-shrink:0;}
+.cnt-item{font-size:12px;color:var(--text-sub);white-space:nowrap;}
+.cnt-item strong{font-weight:700;}
 .toggle-wrap{display:flex;align-items:center;gap:8px;}
 .toggle-switch{position:relative;width:36px;height:20px;cursor:pointer;flex-shrink:0;}
 .toggle-switch input{opacity:0;width:0;height:0;position:absolute;}
@@ -105,7 +109,7 @@ tbody tr:hover{background:#f8faff;}
 td{padding:9px 14px;vertical-align:middle;}
 .col-st{width:118px;}
 .col-name{min-width:220px;max-width:360px;}
-.col-parent{min-width:130px;max-width:210px;}
+.col-epic{min-width:150px;max-width:230px;}
 .col-who{width:80px;}
 .col-sprint{width:120px;}
 .col-due{width:104px;white-space:nowrap;}
@@ -132,9 +136,12 @@ td{padding:9px 14px;vertical-align:middle;}
 .due.val{color:var(--text);}
 .due.over{color:var(--red);}
 .upd{font-family:var(--mono);font-size:11px;color:var(--text-dim);}
-.parent{font-size:11px;color:var(--text-dim);text-decoration:none;}
-.parent:hover{color:var(--indigo);text-decoration:underline;}
-.fav-btn{background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;transition:all .15s;opacity:.35;font-size:15px;color:var(--yellow);}
+.epic{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#334155;font-weight:500;text-decoration:none;}
+.epic:hover{color:var(--indigo);text-decoration:underline;}
+.epic-dot{width:7px;height:7px;border-radius:2px;background:#8b5cf6;flex-shrink:0;}
+.epic-none{color:var(--text-dim);font-size:11px;}
+.cards-note{font-size:11px;color:var(--text-dim);margin:-4px 0 14px;}
+.fav-btn{background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;transition:all .15s;opacity:.4;flex-shrink:0;}
 .fav-btn:hover{opacity:.8;}
 .fav-btn.active{opacity:1;}
 tr.fav-row{background:#fffbeb;}
@@ -143,8 +150,6 @@ tr.sub-row{background:#fafbff;}
 tr.sub-row:hover{background:#f3f5ff;}
 tr.sub-row.fav-row{background:#fffbeb;}
 .sub-arrow{color:var(--text-dim);flex-shrink:0;}
-.grouprow td{background:#f4f6fb;padding:6px 14px;font-weight:700;font-size:12px;color:var(--indigo);border-bottom:1px solid var(--border);}
-.grouprow .gcnt{font-family:var(--mono);font-weight:500;color:var(--text-dim);margin-left:6px;}
 .sort-th{cursor:pointer;user-select:none;}
 .sort-th:hover{color:var(--text);}
 .sort-th.sorted{color:var(--indigo);}
@@ -201,7 +206,7 @@ tr.sub-row.fav-row{background:#fffbeb;}
     </div>
     <button class="today-btn" id="todayBtn">이번 달</button>
     <span class="month-divider"></span>
-    <span class="month-hint">월 집계 기준(완료일·기한·생성일·상태변경일·수정일)은 우측 안내 참고</span>
+    <span class="month-hint">상세 노출 기준은 우측 버튼을 확인하세요</span>
     <button class="info-btn" id="infoBtn" title="안내">🔔</button>
   </div>
 
@@ -233,6 +238,12 @@ tr.sub-row.fav-row{background:#fffbeb;}
       <div class="thead-inner">
         <span class="thead-title">작업 티켓</span>
         <span class="thead-cnt" id="cnt">—</span>
+        <div class="cnt-sep"></div>
+        <span class="cnt-item"><strong style="color:#16a34a" id="n-done">—</strong> 완료</span>
+        <span class="cnt-item"><strong style="color:#2563eb" id="n-inprog">—</strong> 진행</span>
+        <span class="cnt-item"><strong style="color:#d97706" id="n-deploy">—</strong> 배포대기</span>
+        <span class="cnt-item"><strong style="color:#94a3b8" id="n-todo">—</strong> 할일</span>
+        <span class="cnt-item"><strong style="color:#6b7280" id="n-noissue">—</strong> 이슈아님</span>
         <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0;">
           <div class="toggle-wrap">
             <label class="toggle-switch"><input type="checkbox" id="hideInactive"><span class="toggle-slider"></span></label>
@@ -253,7 +264,7 @@ tr.sub-row.fav-row{background:#fffbeb;}
           <tr>
             <th class="col-st">상태</th>
             <th class="col-name">작업명</th>
-            <th class="col-parent">상위작업</th>
+            <th class="col-epic">에픽</th>
             <th class="col-who">담당자</th>
             <th class="col-sprint">스프린트</th>
             <th class="col-due sort-th" data-sort="due">기한/완료일<span class="sort-ico">↕</span></th>
@@ -276,15 +287,20 @@ tr.sub-row.fav-row{background:#fffbeb;}
 <div class="info-modal-overlay" id="infoModal">
   <div class="info-modal">
     <button class="info-modal-close" id="infoClose">×</button>
-    <h3>PnB 스쿼드 프로젝트 현황</h3>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <img src="/squad/favicon.png" width="36" height="36" style="border-radius:9px;flex-shrink:0;" alt="PnB 스쿼드"/>
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--text);line-height:1.2;">대시보드 이용 안내</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">PnB 스쿼드 · Jira 실시간 연동 · 2026.07.09 배포</div>
+      </div>
+    </div>
     <div class="info-section">
       <div class="info-section-title">대상 티켓</div>
       <ul>
         <li>프로젝트 : PNB</li>
         <li>담당자 : 김아라 · 최세영 · 김종구 · 유가람 · 최은희</li>
-        <li>유형 : 작업 + 하위작업(BE · FE · QA · Plan · 버그) 포함</li>
+        <li>유형 : 작업 + 하위작업(BE · FE · QA · Plan · 버그) 포함 · 에픽/이니셔티브 제외</li>
       </ul>
-      <p style="margin-top:6px;font-size:11px;color:#94a3b8;">Jira 실시간 연동 · 2026.07.09 배포</p>
     </div>
     <div class="info-divider"></div>
     <div class="info-section">
@@ -303,17 +319,22 @@ tr.sub-row.fav-row{background:#fffbeb;}
       <div class="info-section-title">사용법</div>
       <ul>
         <li>‹ › 로 월 이동, '이번 달'로 현재 월 복귀.</li>
-        <li>상태 카드 클릭 → 해당 상태 필터. 기본은 담당자 그룹 정렬.</li>
-        <li>기한/완료일 · 업데이트일 헤더 클릭으로 정렬 (3회 클릭 시 담당자 그룹 초기화).</li>
-        <li>담당자 · 유형 칩과 검색으로 필터. 완료·보류 숨기기 토글, 별(⭐) 즐겨찾기.</li>
+        <li>상태 카드 클릭 → 해당 상태만 필터.</li>
+        <li>기본은 최근 업데이트순. 기한/완료일 · 업데이트일 헤더 클릭으로 정렬 (3회 클릭 시 정렬 해제).</li>
+        <li>담당자 · 유형 칩과 검색으로 필터. 완료·보류 숨기기 토글, 별(★) 버튼으로 즐겨찾기.</li>
         <li>현재 필터·월은 URL에 반영 (?who= &status= &type= &q= &month=).</li>
         <li>데이터 10분 캐싱. 하단 '강제 새로고침'으로 즉시 반영.</li>
       </ul>
     </div>
     <div class="info-divider"></div>
     <div class="info-section">
-      <div class="info-section-title">상태 · 하위작업</div>
-      <p>Jira 상태 카테고리 기준 자동 분류(배포 대기·이슈 아님만 별도). 하위작업(BE·FE·QA·Plan)은 옅은 배경·↳ 표시로 구분하고 '상위작업' 열에 소속 작업을 표시합니다.</p>
+      <div class="info-section-title">상태 · 에픽 · 하위작업</div>
+      <ul>
+        <li>상태 : Jira 상태 카테고리(완료 / 진행 중 / 해야 할 일) 기준 자동 분류. 배포 대기·이슈 아님만 별도 표기.</li>
+        <li>상태 카드·상단 건수 : <b>작업 티켓 + 하위작업(BE·FE·QA·Plan) 전체</b> 기준 (에픽·이니셔티브 제외).</li>
+        <li>에픽 열 : 작업(Task) 티켓의 상위 에픽만 표시. 하위작업은 상위가 작업이므로 '—'.</li>
+        <li>하위작업(BE·FE·QA·Plan) : 옅은 배경 + 유형 배지로 구분. 일반 작업 티켓엔 유형 배지 없음.</li>
+      </ul>
     </div>
   </div>
 </div>
@@ -322,6 +343,8 @@ tr.sub-row.fav-row{background:#fffbeb;}
 const API = "/.netlify/functions/squad";
 const ROSTER = ["김아라","최세영","김종구","유가람","최은희"];
 const JIRA_BASE = "https://ajnetworks.atlassian.net/browse";
+const STAR_FILLED='<svg width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.5c.4 0 .8.2 1 .6l2.1 4.3 4.7.7c.5.1.8.5.8 1s-.2.8-.5 1.1l-3.4 3.3.8 4.7c.1.5-.1 1-.5 1.2-.4.3-.9.3-1.3.1L12 17l-4.2 2.2c-.4.2-.9.2-1.3-.1-.4-.3-.6-.7-.5-1.2l.8-4.7-3.4-3.3c-.3-.3-.5-.7-.5-1.1s.3-.9.8-1l4.7-.7L11 3.1c.2-.4.6-.6 1-.6z"/></svg>';
+const STAR_EMPTY='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.5c.4 0 .8.2 1 .6l2.1 4.3 4.7.7c.5.1.8.5.8 1s-.2.8-.5 1.1l-3.4 3.3.8 4.7c.1.5-.1 1-.5 1.2-.4.3-.9.3-1.3.1L12 17l-4.2 2.2c-.4.2-.9.2-1.3-.1-.4-.3-.6-.7-.5-1.2l.8-4.7-3.4-3.3c-.3-.3-.5-.7-.5-1.1s.3-.9.8-1l4.7-.7L11 3.1c.2-.4.6-.6 1-.6z" stroke="#d1d5db" stroke-width="1.5" stroke-linejoin="round"/></svg>';
 
 // ── 상태 분류 (Jira statusCategory fallback) ──
 const NOISSUE_S = new Set(["이슈 아님","# 이슈 아님","보류","# 보류"]);
@@ -416,7 +439,7 @@ function monthPass(t, ym){
 let DATA = [];
 let curYear = now.getFullYear(), curMonth = now.getMonth()+1;  // 1-12
 let filterWho = "전체", filterSt = "전체", filterType = "전체", query = "";
-let sortKey = "who", sortDir = null;      // who | due | upd ; dir null|desc|asc
+let sortKey = null, sortDir = null;       // null(기본=API 순서) | due | upd ; dir null|desc|asc
 let hideInactive = false, favOnly = false;
 let favs = new Set(JSON.parse(localStorage.getItem("squad_favs") || "[]"));
 hideInactive = localStorage.getItem("squad_hideInactive") === "1";
@@ -444,10 +467,7 @@ function passFilter(t){
 
 // ── 정렬 ──
 function sortRows(rows){
-  const rank = (t) => { const i = ROSTER.indexOf(t.assignee); return i<0?999:i; };
-  if(sortKey === "who" || !sortDir){
-    return [...rows].sort((a,b)=> rank(a)-rank(b) || dateSortVal(a).localeCompare(dateSortVal(b)));
-  }
+  if(!sortKey || !sortDir) return rows;  // 기본: API 순서(updated DESC), 담당자 섞여 노출
   const val = sortKey==="due" ? dateSortVal : (t)=> t.updated || "";
   const out = [...rows].sort((a,b)=> (val(a)||"").localeCompare(val(b)||""));
   if(sortDir === "desc") out.reverse();
@@ -459,7 +479,6 @@ function render(){
   document.getElementById("monthLabel").textContent = `${curYear}년 ${curMonth}월`;
   const tbody = document.getElementById("tbody");
   let rows = DATA.filter(passFilter);
-  document.getElementById("cnt").textContent = rows.length + "건";
 
   renderCards(); renderChips(); syncSortIcons(); syncFavBtn();
 
@@ -469,29 +488,24 @@ function render(){
   }
 
   rows = sortRows(rows);
-  const grouped = (sortKey === "who" || !sortDir);
-  let html = "", curWho = null;
+  let html = "";
   for(const t of rows){
-    if(grouped && t.assignee !== curWho){
-      curWho = t.assignee;
-      const gc = rows.filter(r=>r.assignee===curWho).length;
-      html += `<tr class="grouprow"><td colspan="8">${curWho}<span class="gcnt">${gc}건</span></td></tr>`;
-    }
     const b = bucketOf(t), bi = BUCKETS[b], ti = typeInfo(t);
     const fav = favs.has(t.key), sub = t.isSubtask;
-    const arrow = sub ? `<svg class="sub-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 10 20 15 15 20"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/></svg>` : "";
-    const parent = t.parentKey
-      ? `<a class="parent" href="${JIRA_BASE}/${t.parentKey}" target="_blank">↳ ${t.parentName ? esc(t.parentName) : t.parentKey}</a>`
-      : `<span class="parent">—</span>`;
+    const badge = ti.label!=="작업" ? `<span class="tybadge" style="background:${ti.bg};color:${ti.color}">${ti.label}</span>` : "";
+    // 에픽: 작업(task) 타입만 부모(에픽) 표시. 하위작업은 부모가 작업이라 미표시.
+    const epic = (!sub && t.parentKey)
+      ? `<a class="epic" href="${JIRA_BASE}/${t.parentKey}" target="_blank"><span class="epic-dot"></span>${t.parentName ? esc(t.parentName) : t.parentKey}</a>`
+      : `<span class="epic-none">—</span>`;
     html += `<tr class="${fav?"fav-row ":""}${sub?"sub-row":""}">
       <td class="col-st"><span class="stbadge" style="background:${bi.bg};color:${bi.color}"><span class="stdot" style="background:${bi.color}"></span>${esc(stStrip(t.status))}</span></td>
-      <td class="col-name"><div class="nm">${arrow}<span class="tybadge" style="background:${ti.bg};color:${ti.color}">${ti.label}</span><a class="tlink" href="${JIRA_BASE}/${t.key}" target="_blank">${esc(t.name)}</a><span class="tkey">${t.key}</span></div></td>
-      <td class="col-parent">${parent}</td>
+      <td class="col-name"><div class="nm">${badge}<a class="tlink" href="${JIRA_BASE}/${t.key}" target="_blank">${esc(t.name)}</a></div></td>
+      <td class="col-epic">${epic}</td>
       <td class="col-who"><span class="who">${t.assignee}</span></td>
       <td class="col-sprint">${sprintCell(t)}</td>
       <td class="col-due">${dateCell(t)}</td>
       <td class="col-upd"><span class="upd">${t.updated || "—"}</span></td>
-      <td class="col-fav"><button class="fav-btn ${fav?"active":""}" data-fav="${t.key}">${fav?"★":"☆"}</button></td>
+      <td class="col-fav"><button class="fav-btn ${fav?"active":""}" data-fav="${t.key}" aria-label="즐겨찾기">${fav?STAR_FILLED:STAR_EMPTY}</button></td>
     </tr>`;
   }
   tbody.innerHTML = html;
@@ -511,8 +525,15 @@ function renderCards(){
   });
   const c = {all:base.length};
   for(const k of BUCKET_ORDER) c[k] = base.filter(t=>bucketOf(t)===k).length;
+  // 리스트 헤더 건수 (작업+하위작업 전체 기준, 챕터와 동일 배치)
+  document.getElementById("cnt").textContent = `전체 ${c.all}건`;
+  document.getElementById("n-done").textContent = c.done;
+  document.getElementById("n-inprog").textContent = c.inprog;
+  document.getElementById("n-deploy").textContent = c.deploy;
+  document.getElementById("n-todo").textContent = c.todo;
+  document.getElementById("n-noissue").textContent = c.noissue;
   const defs = [
-    {k:"all", lbl:"전체", col:"var(--text)"},
+    {k:"all", lbl:"전체", col:"var(--text)", sub:"작업+하위작업"},
     {k:"todo", lbl:"할 일", col:BUCKETS.todo.color},
     {k:"inprog", lbl:"진행 중", col:BUCKETS.inprog.color},
     {k:"deploy", lbl:"배포 대기", col:BUCKETS.deploy.color},
@@ -521,7 +542,8 @@ function renderCards(){
   ];
   document.getElementById("cards").innerHTML = defs.map(d=>{
     const on = (d.k==="all" && filterSt==="전체") || filterSt===d.k;
-    return `<div class="card ${on?"on":""}" data-card="${d.k}"><div class="card-num" style="color:${d.col}">${c[d.k]}</div><div class="card-lbl">${d.lbl}</div></div>`;
+    const sub = d.sub ? `<div class="card-sub">${d.sub}</div>` : "";
+    return `<div class="card ${on?"on":""}" data-card="${d.k}"><div class="card-num" style="color:${d.col}">${c[d.k]}</div><div class="card-lbl">${d.lbl}</div>${sub}</div>`;
   }).join("");
   document.querySelectorAll("[data-card]").forEach(el=>{
     el.onclick = ()=>{
@@ -559,7 +581,7 @@ document.querySelectorAll(".sort-th").forEach(th=>{
     const k = th.dataset.sort;
     if(sortKey !== k){ sortKey = k; sortDir = "desc"; }
     else if(sortDir === "desc"){ sortDir = "asc"; }
-    else { sortKey = "who"; sortDir = null; }
+    else { sortKey = null; sortDir = null; }
     render();
   };
 });
