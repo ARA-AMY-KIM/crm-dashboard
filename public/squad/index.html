@@ -109,11 +109,10 @@ tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
 tbody tr:last-child{border-bottom:none;}
 tbody tr:hover{background:#f8faff;}
 td{padding:9px 14px;vertical-align:middle;}
-.col-name{width:392px;}
+.col-name{width:492px;}
 .col-who{width:84px;white-space:nowrap;}
 .col-st{width:120px;}
 .col-sprint{width:108px;white-space:nowrap;}
-.col-created{width:100px;white-space:nowrap;}
 .col-due{width:116px;white-space:nowrap;}
 .col-upd{width:100px;white-space:nowrap;}
 .col-fav{width:40px;}
@@ -259,14 +258,13 @@ tr.sub-row.fav-row{background:#fffbeb;}
             <th class="col-who">담당자</th>
             <th class="col-st">상태</th>
             <th class="col-sprint">스프린트</th>
-            <th class="col-created sort-th" data-sort="created">생성일<span class="sort-ico">↕</span></th>
             <th class="col-due sort-th" data-sort="due">기한/완료일<span class="sort-ico">↕</span></th>
             <th class="col-upd sort-th" data-sort="upd">업데이트일<span class="sort-ico">↕</span></th>
             <th class="col-fav"></th>
           </tr>
         </thead>
         <tbody id="tbody">
-          <tr><td colspan="8"><div class="state-box"><div class="spinner"></div><span>데이터를 불러오는 중…</span></div></td></tr>
+          <tr><td colspan="7"><div class="state-box"><div class="spinner"></div><span>데이터를 불러오는 중…</span></div></td></tr>
         </tbody>
       </table>
     </div>
@@ -317,7 +315,7 @@ tr.sub-row.fav-row{background:#fffbeb;}
       <ul>
         <li>‹ › 로 월 이동, '이번 달'로 현재 월 복귀.</li>
         <li>상태 카드 클릭 → 해당 상태만 필터.</li>
-        <li>기본은 최근 업데이트순. 생성일 · 기한/완료일 · 업데이트일 헤더 클릭으로 정렬 (3회 클릭 시 정렬 해제).</li>
+        <li>기본은 최근 업데이트순. 기한/완료일 · 업데이트일 헤더 클릭으로 정렬 (3회 클릭 시 정렬 해제).</li>
         <li>담당자 · 유형 칩과 검색으로 필터. 완료·보류 숨기기 토글, 별(★) 버튼으로 즐겨찾기.</li>
         <li>현재 필터·월은 URL에 반영 (?who= &status= &type= &q= &month=).</li>
         <li>데이터 10분 캐싱. 하단 '강제 새로고침'으로 즉시 반영.</li>
@@ -479,7 +477,7 @@ function render(){
   renderCards(); renderChips(); syncSortIcons(); syncFavBtn();
 
   if(rows.length === 0){
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="8">${DATA.length? "이 달에 해당하는 작업이 없습니다." : "데이터가 없습니다."}</td></tr>`;
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="7">${DATA.length? "이 달에 해당하는 작업이 없습니다." : "데이터가 없습니다."}</td></tr>`;
     return;
   }
 
@@ -497,7 +495,6 @@ function render(){
       <td class="col-who"><span class="who">${t.assignee}</span></td>
       <td class="col-st"><span class="stbadge" style="background:${bi.bg};color:${bi.color}"><span class="stdot" style="background:${bi.color}"></span>${esc(stStrip(t.status))}</span></td>
       <td class="col-sprint">${sprintCell(t)}</td>
-      <td class="col-created"><span class="upd">${t.created || "—"}</span></td>
       <td class="col-due">${dateCell(t)}</td>
       <td class="col-upd"><span class="upd">${t.updated || "—"}</span></td>
       <td class="col-fav"><button class="fav-btn ${fav?"active":""}" data-fav="${t.key}" aria-label="즐겨찾기">${fav?STAR_FILLED:STAR_EMPTY}</button></td>
@@ -656,7 +653,7 @@ async function load(force){
     render();
   }catch(err){
     setStatus("로드 실패", "err");
-    document.getElementById("tbody").innerHTML = `<tr><td colspan="8"><div class="state-box"><span>데이터를 불러오지 못했습니다.</span><span class="tkey">${esc(err.message)}</span></div></td></tr>`;
+    document.getElementById("tbody").innerHTML = `<tr><td colspan="7"><div class="state-box"><span>데이터를 불러오지 못했습니다.</span><span class="tkey">${esc(err.message)}</span></div></td></tr>`;
   }finally{
     document.getElementById("refreshBtn").disabled = false;
     document.getElementById("forceRefreshBtn").disabled = false;
