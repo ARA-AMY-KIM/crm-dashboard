@@ -60,7 +60,8 @@ main{max-width:1300px;margin:0 auto;padding:20px 24px 60px;}
 .cards{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
 .card{flex:1;min-width:110px;background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:12px 16px;box-shadow:var(--sh);cursor:pointer;transition:all .12s;}
 .card:hover{border-color:var(--border2);box-shadow:var(--sh2);}
-.card.on{border-color:var(--indigo-b);background:var(--indigo-bg);}
+.card.on{border-color:var(--indigo);background:var(--indigo-bg);box-shadow:0 0 0 2px var(--indigo-b);}
+.card.disabled{opacity:.4;cursor:not-allowed;pointer-events:none;}
 .card-num{font-size:26px;font-weight:700;line-height:1.1;}
 .card-lbl{font-size:12px;color:var(--text-sub);font-weight:500;margin-top:2px;white-space:nowrap;}
 .card-sub{font-size:10px;color:var(--text-dim);margin-top:2px;}
@@ -305,8 +306,8 @@ tr.sub-row.fav-row{background:#fffbeb;}
         <li>① 처리완료일</li>
         <li>② 기한</li>
         <li>③ 티켓 생성일</li>
-        <li>④ 상태 카테고리 변경일 — 상태 카테고리(할 일 / 진행 중 / 완료)가 바뀐 날짜 기준.</li>
-        <li>⑤ 티켓 수정일 — 마지막 변경 발생일 (2026-06-09 일괄편집 건은 제외).</li>
+        <li>④ 상태 카테고리 변경일 — 상태 카테고리(할 일 / 진행 중 / 완료)가 바뀐 날짜 기준. 같은 카테고리 안에서의 변경(예: 개발 진행 중 → QA 대기)은 반영되지 않습니다.</li>
+        <li>⑤ 티켓 수정일 — 담당자 변경 · 코멘트 · 상태 변경 등 티켓에 마지막으로 변경이 발생한 날짜입니다.</li>
       </ul>
     </div>
     <div class="info-divider"></div>
@@ -316,18 +317,42 @@ tr.sub-row.fav-row{background:#fffbeb;}
         <li>‹ › 로 월 이동, '이번 달'로 현재 월 복귀.</li>
         <li>상태 카드 클릭 → 해당 상태만 필터.</li>
         <li>기본은 최근 업데이트순. 기한/완료일 · 업데이트일 헤더 클릭으로 정렬 (3회 클릭 시 정렬 해제).</li>
-        <li>담당자 · 유형 칩과 검색으로 필터. 완료·보류 숨기기 토글, 별(★) 버튼으로 즐겨찾기.</li>
+        <li>담당자 · 유형 칩과 검색(작업명 · 티켓 키 · 담당자)으로 필터.</li>
         <li>현재 필터·월은 URL에 반영 (?who= &status= &type= &q= &month=).</li>
         <li>데이터 10분 캐싱. 하단 '강제 새로고침'으로 즉시 반영.</li>
       </ul>
     </div>
     <div class="info-divider"></div>
     <div class="info-section">
-      <div class="info-section-title">상태 · 하위작업</div>
+      <div class="info-section-title">상태 · 작업명 · 하위작업</div>
       <ul>
-        <li>상태 : Jira 상태 카테고리(완료 / 진행 중 / 해야 할 일) 기준 자동 분류. 배포 대기·이슈 아님만 별도 표기.</li>
+        <li>상태 : Jira 상태 카테고리 기준으로 자동 분류하며, 배포 대기·이슈 아님만 별도로 표기합니다.
+          <ul style="margin-top:4px;">
+            <li>완료 — Jira '완료' 카테고리 (최종 완료 · 작업 완료 · 기획 완료 등)</li>
+            <li>진행 중 — Jira '진행 중' 카테고리 (개발/기획/디자인 진행·대기, 요구사항 분석 등)</li>
+            <li>배포 대기 — # 배포 대기</li>
+            <li>할 일 — Jira '해야 할 일' 카테고리 (할 일 · 백로그 · 이슈 오픈)</li>
+            <li>이슈 아님 — 이슈 아님 · 보류</li>
+          </ul>
+        </li>
         <li>상태 카드·상단 건수 : <b>작업 티켓 + 하위작업(BE·FE·QA·Plan) 전체</b> 기준 (에픽·이니셔티브 제외).</li>
-        <li>하위작업(BE·FE·QA·Plan) : 이름 앞 ↳ 표시 + 옅은 배경 + 유형 배지로 구분. 일반 작업 티켓엔 배지 없음.</li>
+        <li>작업명 앞 <b style="color:#ec4899;">분홍 점(●)</b> : 상위 에픽이 연결된 작업 티켓입니다. 에픽이 없는 작업엔 점이 표시되지 않습니다.</li>
+        <li>하위작업(BE·FE·QA·Plan) : 작업명 앞 ↳ 표시 + 옅은 배경 + 유형 배지로 구분. 일반 작업 티켓엔 배지 없음.</li>
+      </ul>
+    </div>
+    <div class="info-divider"></div>
+    <div class="info-section">
+      <div class="info-section-title">완료·보류 숨기기</div>
+      <p>상단 토글을 켜면 <b>완료</b> · <b>이슈 아님(보류)</b> 상태의 티켓이 목록에서 빠지고 진행 중인 작업만 표시됩니다. 켠 동안에는 상태 카드의 '완료' · '이슈 아님'을 눌러도 전체로 돌아갑니다.</p>
+    </div>
+    <div class="info-divider"></div>
+    <div class="info-section">
+      <div class="info-section-title">즐겨찾기</div>
+      <ul>
+        <li>행 오른쪽 끝 별(☆)을 클릭하면 즐겨찾기로 등록됩니다.</li>
+        <li>즐겨찾기는 내 브라우저에만 저장됩니다(로그인 불필요). 캐시를 지우거나 다른 브라우저 · 기기에서는 보이지 않습니다.</li>
+        <li>월이 달라도 즐겨찾기 상태는 유지됩니다.</li>
+        <li>상단 ★ 버튼을 누르면 즐겨찾기한 티켓만 볼 수 있습니다.</li>
       </ul>
     </div>
   </div>
@@ -528,14 +553,15 @@ function renderCards(){
   ];
   document.getElementById("cards").innerHTML = defs.map(d=>{
     const on = (d.k==="all" && filterSt==="전체") || filterSt===d.k;
-    return `<div class="card ${on?"on":""}" data-card="${d.k}"><div class="card-num" style="color:${d.col}">${c[d.k]}</div><div class="card-lbl">${d.lbl}</div></div>`;
+    const dis = hideInactive && (d.k==="done"||d.k==="noissue");
+    return `<div class="card ${on?"on":""}${dis?" disabled":""}" data-card="${d.k}"><div class="card-num" style="color:${d.col}">${c[d.k]}</div><div class="card-lbl">${d.lbl}</div></div>`;
   }).join("");
   document.querySelectorAll("[data-card]").forEach(el=>{
     el.onclick = ()=>{
+      if(el.classList.contains("disabled")) return;
       const k = el.dataset.card;
       if(k==="all" || filterSt===k) filterSt = "전체";
       else filterSt = k;
-      if(hideInactive && (filterSt==="done"||filterSt==="noissue")) filterSt = "전체";
       syncUrl(); render();
     };
   });
