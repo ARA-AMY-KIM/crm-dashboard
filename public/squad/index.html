@@ -73,7 +73,9 @@ main{max-width:1300px;margin:0 auto;padding:20px 24px 60px;}
 .chip{padding:3px 10px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid var(--border2);background:var(--white);color:var(--text-sub);cursor:pointer;transition:all .12s;line-height:1.5;}
 .chip:hover{background:var(--subtle);color:var(--text);}
 .chip.on{background:var(--indigo-bg);border-color:var(--indigo-b);color:var(--indigo);font-weight:600;}
+.chip:disabled{opacity:.4;cursor:not-allowed;}
 .tdiv{width:1px;height:20px;background:var(--border);flex-shrink:0;}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
 .search-wrap{position:relative;width:100%;margin-bottom:14px;}
 .search-input{background:var(--white);border:1px solid var(--border2);border-radius:var(--r);padding:8px 10px 8px 28px;font-size:12px;font-family:var(--font);color:var(--text);width:100%;outline:none;transition:all .15s;}
 .search-input:focus{border-color:var(--indigo);box-shadow:0 0 0 3px var(--indigo-bg);}
@@ -209,12 +211,9 @@ tr.sub-row.fav-row{background:#fffbeb;}
     </div>
     <button class="today-btn" id="todayBtn">이번 달</button>
     <span class="month-divider"></span>
-    <span class="month-hint">상세 노출 기준은 우측 버튼을 확인하세요</span>
+    <span class="month-hint">상세 노출 기준은 우측 🔔 버튼을 눌러 확인하세요</span>
     <button class="info-btn" id="infoBtn" title="안내">🔔</button>
   </div>
-
-  <!-- 상태별 카드 (월 영역 바로 아래) -->
-  <div class="cards" id="cards"></div>
 
   <!-- 필터 -->
   <div class="toolbar">
@@ -227,7 +226,22 @@ tr.sub-row.fav-row{background:#fffbeb;}
       <span class="fl">유형</span>
       <div class="chips" id="typeChips"></div>
     </div>
+    <div class="tb-right">
+      <div class="toggle-wrap">
+        <label class="toggle-switch"><input type="checkbox" id="hideInactive"><span class="toggle-slider"></span></label>
+        <span class="toggle-label" id="hideInactiveLbl">완료·보류 숨기기</span>
+      </div>
+      <div class="cnt-sep"></div>
+      <button class="fav-filter-btn" id="favFilterBtn" title="내 즐겨찾기">
+        <svg id="favFilterIco" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2.5c.4 0 .8.2 1 .6l2.1 4.3 4.7.7c.5.1.8.5.8 1s-.2.8-.5 1.1l-3.4 3.3.8 4.7c.1.5-.1 1-.5 1.2-.4.3-.9.3-1.3.1L12 17l-4.2 2.2c-.4.2-.9.2-1.3-.1-.4-.3-.6-.7-.5-1.2l.8-4.7-3.4-3.3c-.3-.3-.5-.7-.5-1.1s.3-.9.8-1l4.7-.7L11 3.1c.2-.4.6-.6 1-.6z" stroke="#d1d5db" stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
   </div>
+
+  <!-- 상태 카드 (클릭 = 상태 필터) -->
+  <div class="cards" id="cards"></div>
 
   <!-- 검색 -->
   <div class="search-wrap">
@@ -237,30 +251,6 @@ tr.sub-row.fav-row{background:#fffbeb;}
 
   <!-- 테이블 -->
   <div class="tcard">
-    <div class="thead-bar">
-      <div class="thead-inner">
-        <span class="thead-title">작업 티켓</span>
-        <span class="thead-cnt" id="cnt">—</span>
-        <div class="cnt-sep"></div>
-        <span class="cnt-item"><strong style="color:#16a34a" id="n-done">—</strong> 완료</span>
-        <span class="cnt-item"><strong style="color:#2563eb" id="n-inprog">—</strong> 진행</span>
-        <span class="cnt-item"><strong style="color:#d97706" id="n-deploy">—</strong> 배포대기</span>
-        <span class="cnt-item"><strong style="color:#94a3b8" id="n-todo">—</strong> 할일</span>
-        <span class="cnt-item"><strong style="color:#6b7280" id="n-noissue">—</strong> 이슈아님</span>
-        <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0;">
-          <div class="toggle-wrap">
-            <label class="toggle-switch"><input type="checkbox" id="hideInactive"><span class="toggle-slider"></span></label>
-            <span class="toggle-label" id="hideInactiveLbl">완료·보류 숨기기</span>
-          </div>
-          <div class="cnt-sep"></div>
-          <button class="fav-filter-btn" id="favFilterBtn" title="내 즐겨찾기">
-            <svg id="favFilterIco" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2.5c.4 0 .8.2 1 .6l2.1 4.3 4.7.7c.5.1.8.5.8 1s-.2.8-.5 1.1l-3.4 3.3.8 4.7c.1.5-.1 1-.5 1.2-.4.3-.9.3-1.3.1L12 17l-4.2 2.2c-.4.2-.9.2-1.3-.1-.4-.3-.6-.7-.5-1.2l.8-4.7-3.4-3.3c-.3-.3-.5-.7-.5-1.1s.3-.9.8-1l4.7-.7L11 3.1c.2-.4.6-.6 1-.6z" stroke="#d1d5db" stroke-width="1.5" stroke-linejoin="round"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-    </div>
     <div class="tscroll">
       <table>
         <thead>
@@ -530,13 +520,7 @@ function renderCards(){
   });
   const c = {all:base.length};
   for(const k of BUCKET_ORDER) c[k] = base.filter(t=>bucketOf(t)===k).length;
-  // 리스트 헤더 건수 (작업+하위작업 전체 기준, 챕터와 동일 배치)
-  document.getElementById("cnt").textContent = `전체 ${c.all}건`;
-  document.getElementById("n-done").textContent = c.done;
-  document.getElementById("n-inprog").textContent = c.inprog;
-  document.getElementById("n-deploy").textContent = c.deploy;
-  document.getElementById("n-todo").textContent = c.todo;
-  document.getElementById("n-noissue").textContent = c.noissue;
+  // 상태 카드 (작업+하위작업 전체 기준, 담당자·유형·검색·월 반영). 클릭 = 상태 필터.
   const defs = [
     {k:"all", lbl:"전체 작업+하위작업", col:"var(--text)"},
     {k:"todo", lbl:"할 일", col:BUCKETS.todo.color},
@@ -547,15 +531,14 @@ function renderCards(){
   ];
   document.getElementById("cards").innerHTML = defs.map(d=>{
     const on = (d.k==="all" && filterSt==="전체") || filterSt===d.k;
-    const sub = d.sub ? `<div class="card-sub">${d.sub}</div>` : "";
-    return `<div class="card ${on?"on":""}" data-card="${d.k}"><div class="card-num" style="color:${d.col}">${c[d.k]}</div><div class="card-lbl">${d.lbl}</div>${sub}</div>`;
+    return `<div class="card ${on?"on":""}" data-card="${d.k}"><div class="card-num" style="color:${d.col}">${c[d.k]}</div><div class="card-lbl">${d.lbl}</div></div>`;
   }).join("");
   document.querySelectorAll("[data-card]").forEach(el=>{
     el.onclick = ()=>{
       const k = el.dataset.card;
       if(k==="all" || filterSt===k) filterSt = "전체";
       else filterSt = k;
-      if(hideInactive && (filterSt==="done"||filterSt==="noissue")) return; // 숨김 상태와 충돌 방지
+      if(hideInactive && (filterSt==="done"||filterSt==="noissue")) filterSt = "전체";
       syncUrl(); render();
     };
   });
