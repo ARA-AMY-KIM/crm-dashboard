@@ -83,7 +83,7 @@ main{max-width:1300px;margin:0 auto;padding:20px 24px 60px;}
 /* TABLE */
 .tcard{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);box-shadow:var(--sh);overflow:hidden;}
 .thead-bar{display:flex;align-items:center;padding:9px 16px;border-bottom:1px solid var(--border);background:var(--subtle);}
-.thead-inner{display:flex;align-items:center;gap:10px;width:100%;}
+.thead-inner{display:flex;align-items:center;gap:10px;width:100%;flex-wrap:wrap;row-gap:6px;}
 .thead-title{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;}
 .thead-cnt{font-size:11px;color:var(--text-dim);background:var(--white);border:1px solid var(--border);padding:1px 7px;border-radius:20px;font-family:var(--mono);white-space:nowrap;}
 .cnt-sep{width:1px;height:14px;background:var(--border);flex-shrink:0;}
@@ -101,26 +101,28 @@ main{max-width:1300px;margin:0 auto;padding:20px 24px 60px;}
 .fav-filter-btn{background:none;border:none;cursor:pointer;padding:2px;display:flex;align-items:center;flex-shrink:0;transition:all .15s;}
 
 .tscroll{overflow-x:auto;}
-table{width:100%;border-collapse:collapse;min-width:1000px;}
+table{width:100%;border-collapse:collapse;min-width:1060px;table-layout:fixed;}
 thead th{background:var(--subtle);padding:8px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--text-dim);letter-spacing:.04em;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap;}
 tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
 tbody tr:last-child{border-bottom:none;}
 tbody tr:hover{background:#f8faff;}
 td{padding:9px 14px;vertical-align:middle;}
-.col-st{width:118px;}
-.col-name{min-width:340px;}
+.col-name{width:300px;}
 .col-who{width:96px;white-space:nowrap;}
-.col-sprint{width:156px;white-space:nowrap;}
-.col-created{width:104px;white-space:nowrap;}
-.col-due{width:104px;white-space:nowrap;}
-.col-upd{width:104px;white-space:nowrap;}
-.col-fav{width:34px;}
+.col-st{width:132px;}
+.col-sprint{width:150px;white-space:nowrap;}
+.col-created{width:108px;white-space:nowrap;}
+.col-due{width:120px;white-space:nowrap;}
+.col-upd{width:108px;white-space:nowrap;}
+.col-fav{width:46px;}
+td.col-fav{padding-left:6px;padding-right:6px;text-align:center;}
 
 .stbadge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600;white-space:nowrap;}
 .stdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
-.nm{display:flex;align-items:center;gap:6px;white-space:nowrap;}
+.nm{display:flex;align-items:center;gap:6px;min-width:0;}
+.epic-mark{width:8px;height:8px;border-radius:50%;background:#ec4899;flex-shrink:0;}
 .tybadge{display:inline-block;font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;flex-shrink:0;}
-.tlink{color:var(--text);text-decoration:none;font-size:13px;font-weight:500;transition:color .12s;}
+.tlink{color:var(--text);text-decoration:none;font-size:13px;font-weight:500;transition:color .12s;min-width:0;word-break:break-word;}
 .tlink:hover{color:var(--indigo);text-decoration:underline;}
 .tkey{font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-left:2px;}
 .who{font-size:12px;color:var(--text-sub);font-weight:500;}
@@ -162,6 +164,9 @@ tr.sub-row.fav-row{background:#fffbeb;}
 .force-refresh{margin-top:20px;text-align:right;}
 .force-refresh button{font-size:10px;color:var(--text-dim);background:none;border:none;cursor:pointer;text-decoration:underline;padding:0;}
 .force-refresh button:hover{color:var(--text-sub);}
+.scroll-top{position:fixed;right:24px;bottom:24px;width:48px;height:48px;border-radius:50%;background:#ffffff;border:1.5px solid #bfdbfe;box-shadow:0 4px 12px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .2s,visibility .2s,transform .2s,border-color .12s,background .12s;z-index:150;}
+.scroll-top.show{opacity:1;visibility:visible;transform:translateY(0);}
+.scroll-top:hover{background:#eff6ff;border-color:#93c5fd;}
 
 /* INFO MODAL */
 .info-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;align-items:center;justify-content:center;}
@@ -281,6 +286,10 @@ tr.sub-row.fav-row{background:#fffbeb;}
     <button id="forceRefreshBtn">강제 새로고침</button>
   </div>
 </main>
+
+<button class="scroll-top" id="scrollTopBtn" aria-label="맨 위로" title="맨 위로">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+</button>
 
 <div class="info-modal-overlay" id="infoModal">
   <div class="info-modal">
@@ -490,10 +499,11 @@ function render(){
     const b = bucketOf(t), bi = BUCKETS[b], ti = typeInfo(t);
     const fav = favs.has(t.key), sub = t.isSubtask;
     const badge = ti.label!=="작업" ? `<span class="tybadge" style="background:${ti.bg};color:${ti.color}">${ti.label}</span>` : "";
-    // 하위작업이면 이름 앞에 ↳ 표시
-    const arrow = sub ? `<svg class="sub-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 10 20 15 15 20"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/></svg>` : "";
+    // 하위작업: 이름 앞 ↳ / 에픽 연결된 작업: 분홍 점
+    const arrowSvg = `<svg class="sub-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 10 20 15 15 20"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/></svg>`;
+    const mark = sub ? arrowSvg : (t.parentKey ? `<span class="epic-mark" title="에픽 연결됨"></span>` : "");
     html += `<tr class="${fav?"fav-row ":""}${sub?"sub-row":""}">
-      <td class="col-name"><div class="nm">${arrow}${badge}<a class="tlink" href="${JIRA_BASE}/${t.key}" target="_blank">${esc(t.name)}</a></div></td>
+      <td class="col-name"><div class="nm">${mark}${badge}<a class="tlink" href="${JIRA_BASE}/${t.key}" target="_blank" title="${esc(t.name)}">${esc(t.name)}</a></div></td>
       <td class="col-who"><span class="who">${t.assignee}</span></td>
       <td class="col-st"><span class="stbadge" style="background:${bi.bg};color:${bi.color}"><span class="stdot" style="background:${bi.color}"></span>${esc(stStrip(t.status))}</span></td>
       <td class="col-sprint">${sprintCell(t)}</td>
@@ -671,6 +681,11 @@ async function load(force){
 }
 document.getElementById("refreshBtn").onclick = ()=>load(false);
 document.getElementById("forceRefreshBtn").onclick = ()=>load(true);
+
+// ── 맨 위로 플로팅 버튼 ──
+const scrollTopBtn = document.getElementById("scrollTopBtn");
+window.addEventListener("scroll", ()=>{ scrollTopBtn.classList.toggle("show", window.scrollY > 300); });
+scrollTopBtn.onclick = ()=> window.scrollTo({top:0, behavior:"smooth"});
 
 applyUrl();
 load(false);
