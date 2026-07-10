@@ -62,7 +62,7 @@ main{max-width:1300px;margin:0 auto;padding:20px 24px 60px;}
 .card:hover{border-color:var(--border2);box-shadow:var(--sh2);}
 .card.on{border-color:var(--indigo-b);background:var(--indigo-bg);}
 .card-num{font-size:26px;font-weight:700;line-height:1.1;}
-.card-lbl{font-size:12px;color:var(--text-sub);font-weight:500;margin-top:2px;}
+.card-lbl{font-size:12px;color:var(--text-sub);font-weight:500;margin-top:2px;white-space:nowrap;}
 .card-sub{font-size:10px;color:var(--text-dim);margin-top:2px;}
 
 /* TOOLBAR */
@@ -108,17 +108,17 @@ tbody tr:last-child{border-bottom:none;}
 tbody tr:hover{background:#f8faff;}
 td{padding:9px 14px;vertical-align:middle;}
 .col-st{width:118px;}
-.col-name{min-width:220px;max-width:360px;}
-.col-epic{min-width:150px;max-width:230px;}
+.col-name{min-width:340px;}
 .col-who{width:80px;}
 .col-sprint{width:120px;}
+.col-created{width:104px;white-space:nowrap;}
 .col-due{width:104px;white-space:nowrap;}
 .col-upd{width:104px;white-space:nowrap;}
 .col-fav{width:34px;}
 
 .stbadge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600;white-space:nowrap;}
 .stdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
-.nm{display:flex;align-items:center;gap:6px;}
+.nm{display:flex;align-items:center;gap:6px;white-space:nowrap;}
 .tybadge{display:inline-block;font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;flex-shrink:0;}
 .tlink{color:var(--text);text-decoration:none;font-size:13px;font-weight:500;transition:color .12s;}
 .tlink:hover{color:var(--indigo);text-decoration:underline;}
@@ -128,7 +128,7 @@ td{padding:9px 14px;vertical-align:middle;}
 .sprint.active{background:var(--indigo-bg);color:var(--indigo);}
 .sprint.closed{background:var(--gray-bg);color:var(--gray);}
 .sprint.future{background:var(--sky-bg);color:var(--sky);}
-.sprint-more{display:inline-block;margin-left:3px;font-size:9px;font-weight:700;color:var(--text-dim);background:var(--gray-bg);border:1px solid var(--border);padding:1px 4px;border-radius:4px;cursor:help;vertical-align:middle;}
+.sprint-more{display:inline-block;margin-left:3px;font-size:9px;font-weight:700;color:var(--text-dim);background:var(--gray-bg);border:1px solid var(--border);padding:1px 4px;border-radius:4px;vertical-align:middle;}
 .sprint-none{color:var(--text-dim);font-size:11px;}
 .due{font-family:var(--mono);font-size:11px;font-weight:500;}
 .due.tbd{color:var(--text-dim);}
@@ -187,8 +187,6 @@ tr.sub-row.fav-row{background:#fffbeb;}
   <div class="h-left">
     <div class="h-bar"></div>
     <span class="h-title">PnB 스쿼드 프로젝트 현황</span>
-    <div class="h-sep"></div>
-    <span class="h-meta">담당자 현황 · PNB</span>
   </div>
   <div class="h-right">
     <span class="h-status" id="status">불러오는 중…</span>
@@ -262,11 +260,11 @@ tr.sub-row.fav-row{background:#fffbeb;}
       <table>
         <thead>
           <tr>
-            <th class="col-st">상태</th>
             <th class="col-name">작업명</th>
-            <th class="col-epic">에픽</th>
             <th class="col-who">담당자</th>
+            <th class="col-st">상태</th>
             <th class="col-sprint">스프린트</th>
+            <th class="col-created sort-th" data-sort="created">생성일<span class="sort-ico">↕</span></th>
             <th class="col-due sort-th" data-sort="due">기한/완료일<span class="sort-ico">↕</span></th>
             <th class="col-upd sort-th" data-sort="upd">업데이트일<span class="sort-ico">↕</span></th>
             <th class="col-fav"></th>
@@ -320,7 +318,7 @@ tr.sub-row.fav-row{background:#fffbeb;}
       <ul>
         <li>‹ › 로 월 이동, '이번 달'로 현재 월 복귀.</li>
         <li>상태 카드 클릭 → 해당 상태만 필터.</li>
-        <li>기본은 최근 업데이트순. 기한/완료일 · 업데이트일 헤더 클릭으로 정렬 (3회 클릭 시 정렬 해제).</li>
+        <li>기본은 최근 업데이트순. 생성일 · 기한/완료일 · 업데이트일 헤더 클릭으로 정렬 (3회 클릭 시 정렬 해제).</li>
         <li>담당자 · 유형 칩과 검색으로 필터. 완료·보류 숨기기 토글, 별(★) 버튼으로 즐겨찾기.</li>
         <li>현재 필터·월은 URL에 반영 (?who= &status= &type= &q= &month=).</li>
         <li>데이터 10분 캐싱. 하단 '강제 새로고침'으로 즉시 반영.</li>
@@ -328,12 +326,11 @@ tr.sub-row.fav-row{background:#fffbeb;}
     </div>
     <div class="info-divider"></div>
     <div class="info-section">
-      <div class="info-section-title">상태 · 에픽 · 하위작업</div>
+      <div class="info-section-title">상태 · 하위작업</div>
       <ul>
         <li>상태 : Jira 상태 카테고리(완료 / 진행 중 / 해야 할 일) 기준 자동 분류. 배포 대기·이슈 아님만 별도 표기.</li>
         <li>상태 카드·상단 건수 : <b>작업 티켓 + 하위작업(BE·FE·QA·Plan) 전체</b> 기준 (에픽·이니셔티브 제외).</li>
-        <li>에픽 열 : 작업(Task) 티켓의 상위 에픽만 표시. 하위작업은 상위가 작업이므로 '—'.</li>
-        <li>하위작업(BE·FE·QA·Plan) : 옅은 배경 + 유형 배지로 구분. 일반 작업 티켓엔 유형 배지 없음.</li>
+        <li>하위작업(BE·FE·QA·Plan) : 이름 앞 ↳ 표시 + 옅은 배경 + 유형 배지로 구분. 일반 작업 티켓엔 배지 없음.</li>
       </ul>
     </div>
   </div>
@@ -468,7 +465,7 @@ function passFilter(t){
 // ── 정렬 ──
 function sortRows(rows){
   if(!sortKey || !sortDir) return rows;  // 기본: API 순서(updated DESC), 담당자 섞여 노출
-  const val = sortKey==="due" ? dateSortVal : (t)=> t.updated || "";
+  const val = sortKey==="due" ? dateSortVal : sortKey==="created" ? (t)=> t.created || "" : (t)=> t.updated || "";
   const out = [...rows].sort((a,b)=> (val(a)||"").localeCompare(val(b)||""));
   if(sortDir === "desc") out.reverse();
   return out;
@@ -493,16 +490,14 @@ function render(){
     const b = bucketOf(t), bi = BUCKETS[b], ti = typeInfo(t);
     const fav = favs.has(t.key), sub = t.isSubtask;
     const badge = ti.label!=="작업" ? `<span class="tybadge" style="background:${ti.bg};color:${ti.color}">${ti.label}</span>` : "";
-    // 에픽: 작업(task) 타입만 부모(에픽) 표시. 하위작업은 부모가 작업이라 미표시.
-    const epic = (!sub && t.parentKey)
-      ? `<a class="epic" href="${JIRA_BASE}/${t.parentKey}" target="_blank"><span class="epic-dot"></span>${t.parentName ? esc(t.parentName) : t.parentKey}</a>`
-      : `<span class="epic-none">—</span>`;
+    // 하위작업이면 이름 앞에 ↳ 표시
+    const arrow = sub ? `<svg class="sub-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 10 20 15 15 20"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/></svg>` : "";
     html += `<tr class="${fav?"fav-row ":""}${sub?"sub-row":""}">
-      <td class="col-st"><span class="stbadge" style="background:${bi.bg};color:${bi.color}"><span class="stdot" style="background:${bi.color}"></span>${esc(stStrip(t.status))}</span></td>
-      <td class="col-name"><div class="nm">${badge}<a class="tlink" href="${JIRA_BASE}/${t.key}" target="_blank">${esc(t.name)}</a></div></td>
-      <td class="col-epic">${epic}</td>
+      <td class="col-name"><div class="nm">${arrow}${badge}<a class="tlink" href="${JIRA_BASE}/${t.key}" target="_blank">${esc(t.name)}</a></div></td>
       <td class="col-who"><span class="who">${t.assignee}</span></td>
+      <td class="col-st"><span class="stbadge" style="background:${bi.bg};color:${bi.color}"><span class="stdot" style="background:${bi.color}"></span>${esc(stStrip(t.status))}</span></td>
       <td class="col-sprint">${sprintCell(t)}</td>
+      <td class="col-created"><span class="upd">${t.created || "—"}</span></td>
       <td class="col-due">${dateCell(t)}</td>
       <td class="col-upd"><span class="upd">${t.updated || "—"}</span></td>
       <td class="col-fav"><button class="fav-btn ${fav?"active":""}" data-fav="${t.key}" aria-label="즐겨찾기">${fav?STAR_FILLED:STAR_EMPTY}</button></td>
@@ -533,7 +528,7 @@ function renderCards(){
   document.getElementById("n-todo").textContent = c.todo;
   document.getElementById("n-noissue").textContent = c.noissue;
   const defs = [
-    {k:"all", lbl:"전체", col:"var(--text)", sub:"작업+하위작업"},
+    {k:"all", lbl:"전체 작업+하위작업", col:"var(--text)"},
     {k:"todo", lbl:"할 일", col:BUCKETS.todo.color},
     {k:"inprog", lbl:"진행 중", col:BUCKETS.inprog.color},
     {k:"deploy", lbl:"배포 대기", col:BUCKETS.deploy.color},
@@ -663,8 +658,8 @@ async function load(force){
     const json = await res.json();
     DATA = json.tickets || [];
     const at = json.cachedAt ? new Date(json.cachedAt) : new Date();
-    const hh = String(at.getHours()).padStart(2,"0"), mm = String(at.getMinutes()).padStart(2,"0");
-    setStatus(`✓ ${json.cached?"캐시":"실시간"} ${hh}:${mm}`, "ok");
+    const hh = String(at.getHours()).padStart(2,"0"), mm = String(at.getMinutes()).padStart(2,"0"), ss = String(at.getSeconds()).padStart(2,"0");
+    setStatus(`✓ ${json.cached?"캐시":"실시간"} ${hh}:${mm}:${ss}`, "ok");
     render();
   }catch(err){
     setStatus("로드 실패", "err");
