@@ -154,6 +154,8 @@ tr.sub-row{background:#fafbff;}
 tr.sub-row:hover{background:#f3f5ff;}
 tr.sub-row.fav-row{background:#fffbeb;}
 .sub-arrow{color:var(--text-dim);flex-shrink:0;}
+.sub-parent{display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:11px;color:#94a3b8;text-decoration:none;flex-shrink:0;}
+.sub-parent:hover{color:var(--indigo);text-decoration:underline;}
 .sort-th{cursor:pointer;user-select:none;}
 .sort-th:hover{color:var(--text);}
 .sort-th.sorted{color:var(--indigo);}
@@ -337,7 +339,7 @@ tr.sub-row.fav-row{background:#fffbeb;}
         </li>
         <li>상태 카드·상단 건수 : <b>작업 티켓 + 하위작업(BE·FE·QA·Plan) 전체</b> 기준 (에픽·이니셔티브 제외).</li>
         <li>작업명 앞 <b style="color:#ec4899;">분홍 점(●)</b> : 상위 에픽이 연결된 작업 티켓입니다. 에픽이 없는 작업엔 점이 표시되지 않습니다.</li>
-        <li>하위작업(BE·FE·QA·Plan) : 작업명 앞 ↳ 표시 + 옅은 배경 + 유형 배지로 구분. 일반 작업 티켓엔 배지 없음.</li>
+        <li>하위작업(BE·FE·QA·Plan) : 작업명 앞에 🔗 상위 작업 번호(PNB-XXXX)와 유형 배지가 붙고 옅은 배경으로 구분됩니다. 상위 번호를 누르면 상위 작업으로 이동합니다. 일반 작업 티켓엔 배지가 없습니다.</li>
       </ul>
     </div>
     <div class="info-divider"></div>
@@ -512,11 +514,17 @@ function render(){
     const b = bucketOf(t), bi = BUCKETS[b], ti = typeInfo(t);
     const fav = favs.has(t.key), sub = t.isSubtask;
     const badge = ti.label!=="작업" ? `<span class="tybadge" style="background:${ti.bg};color:${ti.color}">${ti.label}</span>` : "";
-    // 하위작업: 이름 앞 ↳ / 에픽 연결된 작업: 분홍 점
-    const arrowSvg = `<svg class="sub-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 10 20 15 15 20"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/></svg>`;
-    const mark = sub ? arrowSvg : (t.parentKey ? `<span class="epic-mark" title="에픽 연결됨"></span>` : "");
+    // 하위작업: 🔗 상위 작업번호(클릭=상위로 이동) + 유형태그 / 에픽 연결된 작업: 분홍 점
+    let prefix = "";
+    if(sub){
+      prefix = t.parentKey
+        ? `<a class="sub-parent" href="${JIRA_BASE}/${t.parentKey}" target="_blank"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>${t.parentKey}</a>`
+        : "";
+    } else if(t.parentKey){
+      prefix = `<span class="epic-mark" title="에픽 연결됨"></span>`;
+    }
     html += `<tr class="${fav?"fav-row ":""}${sub?"sub-row":""}">
-      <td class="col-name"><div class="nm">${mark}${badge}<a class="tlink" href="${JIRA_BASE}/${t.key}" target="_blank" title="${esc(t.name)}">${esc(t.name)}</a></div></td>
+      <td class="col-name"><div class="nm">${prefix}${badge}<a class="tlink" href="${JIRA_BASE}/${t.key}" target="_blank">${esc(t.name)}</a></div></td>
       <td class="col-who"><span class="who">${t.assignee}</span></td>
       <td class="col-st"><span class="stbadge" style="background:${bi.bg};color:${bi.color}"><span class="stdot" style="background:${bi.color}"></span>${esc(stStrip(t.status))}</span></td>
       <td class="col-sprint">${sprintCell(t)}</td>
