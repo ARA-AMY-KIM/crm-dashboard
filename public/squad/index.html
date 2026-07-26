@@ -122,7 +122,7 @@ td.col-fav{padding-left:6px;padding-right:6px;text-align:center;}
 .stbadge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600;white-space:nowrap;}
 .stdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
 .nm{display:flex;align-items:center;gap:6px;min-width:0;}
-.epic-mark{width:6px;height:6px;border-radius:50%;background:#ec4899;flex-shrink:0;}
+.epic-mark{width:6px;height:6px;border-radius:50%;background:#8b5cf6;flex-shrink:0;}
 .tybadge{display:inline-block;font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;flex-shrink:0;}
 .tlink{color:var(--text);text-decoration:none;font-size:13px;font-weight:500;transition:color .12s;min-width:0;word-break:break-word;}
 .tlink:hover{color:var(--indigo);text-decoration:underline;}
@@ -157,9 +157,10 @@ tr.sub-row.fav-row{background:#fffbeb;}
 .sub-parent{display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:11px;color:#94a3b8;text-decoration:none;flex-shrink:0;}
 .sub-parent:hover{color:var(--indigo);text-decoration:underline;}
 tr.nested .col-name{padding-left:34px;}
-tr.grp-parent td{background:#e0e7ff;border-bottom:1px solid var(--indigo-b);}
-tr.grp-parent:hover td{background:#d5ddfb;}
-.pflag{display:inline-block;font-size:9px;font-weight:700;color:#fff;background:var(--indigo);border-radius:4px;padding:1px 6px;margin-right:6px;flex-shrink:0;vertical-align:middle;}
+tr.grp-parent td{background:#e8f4fc;border-bottom:1px solid #c3e3f5;}
+tr.grp-parent:hover td{background:#ddeef9;}
+tr.grp-parent.fav-row td:first-child{box-shadow:inset 4px 0 0 #f59e0b;}
+.pflag{display:inline-block;font-size:9px;font-weight:700;color:#0369a1;background:#fff;border:1px solid #7dd3fc;border-radius:4px;padding:1px 6px;margin-right:6px;flex-shrink:0;vertical-align:middle;}
 .ctx-link{font-family:var(--mono);font-size:11px;color:var(--indigo);text-decoration:none;}
 .ctx-link:hover{text-decoration:underline;}
 .ctx-name{font-size:12px;color:var(--text-sub);font-weight:600;}
@@ -350,7 +351,7 @@ tr.grp-parent:hover td{background:#d5ddfb;}
           </ul>
         </li>
         <li>상태 카드·상단 건수 : <b>작업 티켓 + 하위작업(BE·FE·QA·Plan) 전체</b> 기준 (에픽·이니셔티브 제외).</li>
-        <li>작업명 앞 <b style="color:#ec4899;">분홍 점(●)</b> : 상위 에픽이 연결된 작업 티켓입니다. 에픽이 없는 작업엔 점이 표시되지 않습니다.</li>
+        <li>작업명 앞 <b style="color:#8b5cf6;">보라 점(●)</b> : 상위 에픽이 연결된 작업 티켓입니다. 에픽이 없는 작업엔 점이 표시되지 않습니다.</li>
         <li>하위작업(BE·FE·QA·Plan) : 작업명 앞에 🔗 상위 작업 번호(PNB-XXXX)와 유형 배지가 붙고 옅은 배경으로 구분됩니다. 상위 번호를 누르면 상위 작업으로 이동합니다. 일반 작업 티켓엔 배지가 없습니다.</li>
       </ul>
     </div>
