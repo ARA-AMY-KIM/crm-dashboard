@@ -156,6 +156,12 @@ tr.sub-row.fav-row{background:#fffbeb;}
 .sub-arrow{color:var(--text-dim);flex-shrink:0;}
 .sub-parent{display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:11px;color:#94a3b8;text-decoration:none;flex-shrink:0;}
 .sub-parent:hover{color:var(--indigo);text-decoration:underline;}
+tr.nested .col-name{padding-left:34px;}
+tr.ctx-parent td{background:#f8fafc;padding:7px 14px;border-bottom:1px solid var(--border);}
+.ctx-link{font-family:var(--mono);font-size:11px;color:var(--indigo);text-decoration:none;}
+.ctx-link:hover{text-decoration:underline;}
+.ctx-name{font-size:12px;color:var(--text-sub);font-weight:600;}
+.ctx-tag{font-size:9px;color:var(--text-dim);border:1px solid var(--border2);border-radius:4px;padding:1px 5px;margin-left:6px;vertical-align:middle;}
 .sort-th{cursor:pointer;user-select:none;}
 .sort-th:hover{color:var(--text);}
 .sort-th.sorted{color:var(--indigo);}
@@ -229,6 +235,11 @@ tr.sub-row.fav-row{background:#fffbeb;}
       <div class="chips" id="typeChips"></div>
     </div>
     <div class="tb-right">
+      <div class="toggle-wrap">
+        <label class="toggle-switch"><input type="checkbox" id="hierarchyToggle"><span class="toggle-slider"></span></label>
+        <span class="toggle-label" id="hierarchyLbl">작업별 묶어보기</span>
+      </div>
+      <div class="cnt-sep"></div>
       <div class="toggle-wrap">
         <label class="toggle-switch"><input type="checkbox" id="hideInactive"><span class="toggle-slider"></span></label>
         <span class="toggle-label" id="hideInactiveLbl">완료·보류 숨기기</span>
@@ -464,6 +475,7 @@ let sortKey = null, sortDir = null;       // null(기본=API 순서) | due | upd
 let hideInactive = false, favOnly = false;
 let favs = new Set(JSON.parse(localStorage.getItem("squad_favs") || "[]"));
 hideInactive = localStorage.getItem("squad_hideInactive") === "1";
+let hierarchyOn = localStorage.getItem("squad_hierarchy") === "1";
 
 const STATUS_CODE = {done:"done",inprog:"wip",deploy:"deploy",noissue:"noissue",todo:"todo"};
 const CODE_STATUS = Object.fromEntries(Object.entries(STATUS_CODE).map(([k,v])=>[v,k]));
@@ -496,26 +508,15 @@ function sortRows(rows){
 }
 
 // ── 렌더 ──
-function render(){
-  document.getElementById("monthLabel").textContent = `${curYear}년 ${curMonth}월`;
-  const tbody = document.getElementById("tbody");
-  let rows = DATA.filter(passFilter);
-
-  renderCards(); renderChips(); syncSortIcons(); syncFavBtn();
-
-  if(rows.length === 0){
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="7">${DATA.length? "이 달에 해당하는 작업이 없습니다." : "데이터가 없습니다."}</td></tr>`;
-    return;
-  }
-
-  rows = sortRows(rows);
-  let html = "";
-  for(const t of rows){
-    const b = bucketOf(t), bi = BUCKETS[b], ti = typeInfo(t);
-    const fav = favs.has(t.key), sub = t.isSubtask;
-    const badge = ti.label!=="작업" ? `<span class="tybadge" style="background:${ti.bg};color:${ti.color}">${ti.label}</span>` : "";
-    // 하위작업: 🔗 상위 작업번호(클릭=상위로 이동) + 유형태그 / 에픽 연결된 작업: 분홍 점
-    let prefix = "";
+// 행 1개 HTML. opts.nested=true면 계층 뷰의 하위작업(들여쓰기, 🔗 생략)
+function rowHtml(t, opts){
+  const nested = opts && opts.nested;
+  const b = bucketOf(t), bi = BUCKETS[b], ti = typeInfo(t);
+  const fav = favs.has(t.key), sub = t.isSubtask;
+  const badge = ti.label!=="작업" ? `<span class="tybadge" style="background:${ti.bg};color:${ti.color}">${ti.label}</span>` : "";
+  let prefix = "";
+  if(!nested){
+    // 하위작업: 🔗 상위 작업번호(클릭=상위로 이동) / 에픽 연결된 작업: 분홍 점
     if(sub){
       prefix = t.parentKey
         ? `<a class="sub-parent" href="${JIRA_BASE}/${t.parentKey}" target="_blank"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>${t.parentKey}</a>`
@@ -523,7 +524,8 @@ function render(){
     } else if(t.parentKey){
       prefix = `<span class="epic-mark" title="에픽 연결됨"></span>`;
     }
-    html += `<tr class="${fav?"fav-row ":""}${sub?"sub-row":""}">
+  }
+  return `<tr class="${fav?"fav-row ":""}${sub?"sub-row ":""}${nested?"nested":""}">
       <td class="col-name"><div class="nm">${prefix}${badge}<a class="tlink" href="${JIRA_BASE}/${t.key}" target="_blank">${esc(t.name)}</a></div></td>
       <td class="col-who"><span class="who">${t.assignee}</span></td>
       <td class="col-st"><span class="stbadge" style="background:${bi.bg};color:${bi.color}"><span class="stdot" style="background:${bi.color}"></span>${esc(stStrip(t.status))}</span></td>
@@ -532,11 +534,56 @@ function render(){
       <td class="col-upd"><span class="upd">${t.updated || "—"}</span></td>
       <td class="col-fav"><button class="fav-btn ${fav?"active":""}" data-fav="${t.key}" aria-label="즐겨찾기">${fav?STAR_FILLED:STAR_EMPTY}</button></td>
     </tr>`;
+}
+
+// 계층 뷰: 하위작업을 부모 작업 아래로 묶어 렌더
+function renderHierarchy(rows, tbody){
+  const groups = new Map(); const order = [];
+  const ensure = (key, name)=>{ if(!groups.has(key)){ groups.set(key,{key,name:name||key,task:null,subs:[]}); order.push(key);} return groups.get(key); };
+  for(const t of rows){
+    if(t.isSubtask){ ensure(t.parentKey || ("__x_"+t.key), t.parentName).subs.push(t); }
+    else { ensure(t.key, t.name).task = t; }
+  }
+  const gdate = g => g.task ? (g.task.updated||"") : g.subs.reduce((m,s)=> (s.updated||"")>m?(s.updated||""):m, "");
+  const arr = order.map(k=>groups.get(k)).sort((a,b)=> gdate(b).localeCompare(gdate(a)));
+  let html = "";
+  for(const g of arr){
+    g.subs.sort((a,b)=> dateSortVal(a).localeCompare(dateSortVal(b)));
+    if(g.task){
+      html += rowHtml(g.task, {});
+    } else {
+      const pk = g.key.startsWith("__x_") ? null : g.key;
+      html += `<tr class="ctx-parent"><td class="col-name" colspan="7">${pk?`<a class="ctx-link" href="${JIRA_BASE}/${pk}" target="_blank">${pk}</a> `:""}<span class="ctx-name">${esc(g.name)}</span><span class="ctx-tag">상위 작업</span></td></tr>`;
+    }
+    for(const s of g.subs) html += rowHtml(s, {nested:true});
   }
   tbody.innerHTML = html;
-  tbody.querySelectorAll("[data-fav]").forEach(btn=>{
+}
+
+function bindFav(){
+  document.getElementById("tbody").querySelectorAll("[data-fav]").forEach(btn=>{
     btn.onclick = ()=>{ const k = btn.dataset.fav; favs.has(k)?favs.delete(k):favs.add(k); localStorage.setItem("squad_favs", JSON.stringify([...favs])); render(); };
   });
+}
+
+function render(){
+  document.getElementById("monthLabel").textContent = `${curYear}년 ${curMonth}월`;
+  const tbody = document.getElementById("tbody");
+  const rows = DATA.filter(passFilter);
+
+  renderCards(); renderChips(); syncSortIcons(); syncFavBtn();
+
+  if(rows.length === 0){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="7">${DATA.length? "이 달에 해당하는 작업이 없습니다." : "데이터가 없습니다."}</td></tr>`;
+    return;
+  }
+
+  if(hierarchyOn){
+    renderHierarchy(rows, tbody);
+  } else {
+    tbody.innerHTML = sortRows(rows).map(t=>rowHtml(t)).join("");
+  }
+  bindFav();
 }
 
 // ── 상태 카드 (월 + 담당자 + 유형 + 검색 기준, 상태별 건수) ──
@@ -623,6 +670,17 @@ hi.onchange = ()=>{
   document.getElementById("hideInactiveLbl").classList.toggle("active", hideInactive);
   if(hideInactive && (filterSt==="done"||filterSt==="noissue")) filterSt="전체";
   syncUrl(); render();
+};
+
+// ── 작업별 묶어보기(계층) 토글 ──
+const ht = document.getElementById("hierarchyToggle");
+ht.checked = hierarchyOn;
+document.getElementById("hierarchyLbl").classList.toggle("active", hierarchyOn);
+ht.onchange = ()=>{
+  hierarchyOn = ht.checked;
+  localStorage.setItem("squad_hierarchy", hierarchyOn?"1":"0");
+  document.getElementById("hierarchyLbl").classList.toggle("active", hierarchyOn);
+  render();
 };
 
 // ── 검색 ──
