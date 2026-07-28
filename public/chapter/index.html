@@ -376,11 +376,12 @@ tr.fav-row:hover{background:#fff3c4;}
       <div class="info-section">
         <div class="info-section-title">상태 구분 — 작업 티켓</div>
         <ul>
-          <li>완료 : 최종 완료</li>
-          <li>진행 중 : 기획·디자인·개발·QA 진행 중 / 대기 포함</li>
+          <li>할 일 : 시작 전 (이슈 오픈 / 백로그 포함)</li>
+          <li>기획 진행 중 : 기획 단계 진행 중</li>
+          <li>작업 진행 중 : 기획 완료 이후 디자인·개발·QA 등 후속 작업 진행/대기</li>
           <li>배포 대기 : 배포 대기</li>
-          <li>할 일 : 시작 전</li>
-          <li>이슈 아님 : 보류 / 이슈 아님</li>
+          <li>완료 : 최종 완료</li>
+          <li>※ 보류·이슈 아님은 별도 칩 없이 '전체'에서만 표시되며, '완료·보류 숨기기'로 숨길 수 있습니다.</li>
         </ul>
       </div>
       <div class="info-divider"></div>
@@ -472,12 +473,12 @@ tr.fav-row:hover{background:#fff3c4;}
     <div class="fg">
       <span class="fl">상태</span>
       <div class="chips">
-        <button class="chip on" data-f="st" data-v="all"     onclick="sf('st','all',this)">전체</button>
-        <button class="chip"    data-f="st" data-v="done"    onclick="sf('st','done',this)">완료</button>
-        <button class="chip"    data-f="st" data-v="inprog"  onclick="sf('st','inprog',this)">진행 중</button>
-        <button class="chip"    data-f="st" data-v="deploy"  onclick="sf('st','deploy',this)">배포 대기</button>
-        <button class="chip"    data-f="st" data-v="todo"    onclick="sf('st','todo',this)">할 일</button>
-        <button class="chip"    data-f="st" data-v="noissue" onclick="sf('st','noissue',this)">이슈 아님</button>
+        <button class="chip on" data-f="st" data-v="all"    onclick="sf('st','all',this)">전체</button>
+        <button class="chip"    data-f="st" data-v="todo"   onclick="sf('st','todo',this)">할 일</button>
+        <button class="chip"    data-f="st" data-v="planip" onclick="sf('st','planip',this)">기획 진행 중</button>
+        <button class="chip"    data-f="st" data-v="workip" onclick="sf('st','workip',this)">작업 진행 중</button>
+        <button class="chip"    data-f="st" data-v="deploy" onclick="sf('st','deploy',this)">배포 대기</button>
+        <button class="chip"    data-f="st" data-v="done"   onclick="sf('st','done',this)">완료</button>
       </div>
     </div>
   </div>
@@ -498,10 +499,10 @@ tr.fav-row:hover{background:#fff3c4;}
         <span class="thead-cnt" id="tcnt" style="white-space:nowrap;">—</span>
         <div style="width:1px;height:14px;background:var(--border);flex-shrink:0;"></div>
         <span style="font-size:12px;color:var(--text-sub);white-space:nowrap;"><strong style="color:#16a34a;" id="n1">—</strong> 완료</span>
-        <span style="font-size:12px;color:var(--text-sub);white-space:nowrap;"><strong style="color:#4338ca;" id="n2">—</strong> 진행</span>
-        <span style="font-size:12px;color:var(--text-sub);white-space:nowrap;"><strong style="color:#d97706;" id="n3">—</strong> 배포대기</span>
-        <span style="font-size:12px;color:var(--text-sub);white-space:nowrap;"><strong style="color:#94a3b8;" id="n4">—</strong> 할일</span>
-        <span style="font-size:12px;color:var(--text-sub);white-space:nowrap;"><strong style="color:#6b7280;" id="n5">—</strong> 이슈아님</span>
+        <span style="font-size:12px;color:var(--text-sub);white-space:nowrap;"><strong style="color:#db2777;" id="n2">—</strong> 기획진행</span>
+        <span style="font-size:12px;color:var(--text-sub);white-space:nowrap;"><strong style="color:#0891b2;" id="n3">—</strong> 작업진행</span>
+        <span style="font-size:12px;color:var(--text-sub);white-space:nowrap;"><strong style="color:#d97706;" id="n4">—</strong> 배포대기</span>
+        <span style="font-size:12px;color:var(--text-sub);white-space:nowrap;"><strong style="color:#94a3b8;" id="n5">—</strong> 할일</span>
         <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0;">
           <div style="width:1px;height:14px;background:var(--border);"></div>
           <div class="toggle-wrap">
@@ -561,6 +562,7 @@ const NOISSUE_S= new Set(['이슈 아님','# 이슈 아님','보류','# 보류']
 
 const isDone   = s => DONE_S.has(s);
 const isInProg = s => INPROG_S.has(s);
+const isPlanningIP = s => s==='# 기획 진행 중' || s==='기획 진행 중';  // 기획 진행 중 (기획챕터 핵심). 나머지 진행 상태는 '작업 진행 중'.
 const isDeploy = s => DEPLOY_S.has(s);
 const isTodo   = s => TODO_S.has(s);
 const isNoIssue= s => NOISSUE_S.has(s);
@@ -582,14 +584,14 @@ function planStDisplay(s){
 }
 
 const ST_MAP = {
-  '최종 완료':{c:'#16a34a',bg:'#dcfce7'},'# 최종 완료':{c:'#16a34a',bg:'#dcfce7'},
-  '# 기획 진행 중':{c:'#4f46e5',bg:'#e0e7ff'},
+  '최종 완료':{c:'#ffffff',bg:'#16a34a'},'# 최종 완료':{c:'#ffffff',bg:'#16a34a'},
+  '# 기획 진행 중':{c:'#ffffff',bg:'#db2777'},
   '기획 완료':{c:'#4f46e5',bg:'#e0e7ff'},'디자인 작업 완료':{c:'#4f46e5',bg:'#e0e7ff'},
-  '# 디자인 대기':{c:'#7c3aed',bg:'#ede9fe'},'# 개발 대기':{c:'#7c3aed',bg:'#ede9fe'},
-  '# 개발 진행 중':{c:'#7c3aed',bg:'#ede9fe'},'# QA 대기':{c:'#7c3aed',bg:'#ede9fe'},
-  '# QA 진행 중':{c:'#7c3aed',bg:'#ede9fe'},'# 디자인 진행 중':{c:'#7c3aed',bg:'#ede9fe'},
-  '# 디자인 검토 대기':{c:'#7c3aed',bg:'#ede9fe'},'# 작업 진행 중':{c:'#7c3aed',bg:'#ede9fe'},
-  '진행 중':{c:'#7c3aed',bg:'#ede9fe'},
+  '# 디자인 대기':{c:'#4f46e5',bg:'#e0e7ff'},'# 개발 대기':{c:'#4f46e5',bg:'#e0e7ff'},
+  '# 개발 진행 중':{c:'#0891b2',bg:'#cffafe'},'# QA 대기':{c:'#0891b2',bg:'#cffafe'},
+  '# QA 진행 중':{c:'#0891b2',bg:'#cffafe'},'# 디자인 진행 중':{c:'#0891b2',bg:'#cffafe'},
+  '# 디자인 검토 대기':{c:'#4f46e5',bg:'#e0e7ff'},'# 작업 진행 중':{c:'#0891b2',bg:'#cffafe'},
+  '진행 중':{c:'#0891b2',bg:'#cffafe'},
   '# 배포 대기':{c:'#d97706',bg:'#fef3c7'},'배포 대기':{c:'#d97706',bg:'#fef3c7'},
   '할 일':{c:'#94a3b8',bg:'#f1f5f9'},'# 할 일':{c:'#94a3b8',bg:'#f1f5f9'},
   '이슈 오픈':{c:'#94a3b8',bg:'#f1f5f9'},'Backlog':{c:'#94a3b8',bg:'#f1f5f9'},
@@ -660,8 +662,8 @@ function toggleHideInactive(checkbox){
   localStorage.setItem('chapter_hideInactive', hideInactive);
   const label = document.getElementById('hide-inactive-label');
   if(label) label.classList.toggle('active', hideInactive);
-  // 완료/이슈 아님 상태 칩이 선택돼 있으면 전체로 되돌림 (토글과 충돌 방지)
-  if(hideInactive && (F.st==='done' || F.st==='noissue')){
+  // 완료 칩이 선택돼 있으면 전체로 되돌림 (토글과 충돌 방지)
+  if(hideInactive && F.st==='done'){
     F.st='all';
     document.querySelectorAll('[data-f="st"]').forEach(c=>c.classList.toggle('on', c.dataset.v==='all'));
   }
@@ -671,7 +673,7 @@ function toggleHideInactive(checkbox){
 
 function updateStatusChipsDisabled(){
   document.querySelectorAll('[data-f="st"]').forEach(c=>{
-    if(c.dataset.v==='done' || c.dataset.v==='noissue'){
+    if(c.dataset.v==='done'){
       c.disabled = hideInactive;
       c.style.opacity = hideInactive ? '0.35' : '';
       c.style.cursor  = hideInactive ? 'not-allowed' : '';
@@ -743,10 +745,10 @@ function passFilter(r){
   if(F.st!=='all'){
     const taskStMatch=(
       (F.st==='done'&&isDone(r.status))||
-      (F.st==='inprog'&&isInProg(r.status))||
+      (F.st==='planip'&&isPlanningIP(r.status))||
+      (F.st==='workip'&&isInProg(r.status)&&!isPlanningIP(r.status))||
       (F.st==='deploy'&&isDeploy(r.status))||
-      (F.st==='todo'&&isTodo(r.status))||
-      (F.st==='noissue'&&isNoIssue(r.status))
+      (F.st==='todo'&&isTodo(r.status))
     );
     if(!taskStMatch) return false;
   }
@@ -779,22 +781,33 @@ function render(){
     return sortDir==='desc'?vb.localeCompare(va):va.localeCompare(vb);
   }):filtered;
 
+  // 정렬 활성 시 Plan 자동 숨김 + Plan 토글 비활성 표시
+  const _sortActive = !!sortKey;
+  const _pt=document.getElementById('plan-toggle');
+  if(_pt) _pt.disabled=_sortActive;
+  const _pl=document.getElementById('plan-toggle-label');
+  if(_pl){
+    _pl.style.opacity = _sortActive ? '0.4' : '';
+    _pl.style.cursor  = _sortActive ? 'not-allowed' : '';
+    _pl.title = _sortActive ? '정렬 중에는 Plan이 자동 숨김됩니다' : '';
+  }
+
   // 카운트 Task만
-  let cntDone=0,cntInprog=0,cntDeploy=0,cntTodo=0,cntNoissue=0,cntTotal=0;
+  let cntDone=0,cntPlanIP=0,cntWorkIP=0,cntDeploy=0,cntTodo=0,cntTotal=0;
   for(const r of visible){
     if(r.isTargetAssignee===false) continue;
     cntTotal++;
     if(isDone(r.status)) cntDone++;
     else if(isDeploy(r.status)) cntDeploy++;
-    else if(isInProg(r.status)) cntInprog++;
+    else if(isPlanningIP(r.status)) cntPlanIP++;
+    else if(isInProg(r.status)) cntWorkIP++;
     else if(isTodo(r.status)) cntTodo++;
-    else if(isNoIssue(r.status)) cntNoissue++;
   }
   document.getElementById('n1').textContent=cntDone;
-  document.getElementById('n2').textContent=cntInprog;
-  document.getElementById('n3').textContent=cntDeploy;
-  document.getElementById('n4').textContent=cntTodo;
-  document.getElementById('n5').textContent=cntNoissue;
+  document.getElementById('n2').textContent=cntPlanIP;
+  document.getElementById('n3').textContent=cntWorkIP;
+  document.getElementById('n4').textContent=cntDeploy;
+  document.getElementById('n5').textContent=cntTodo;
   document.getElementById('tcnt').textContent=`전체 ${cntTotal}건 (Task)`;
 
   const wrap=document.getElementById('table-body-wrap');
@@ -828,7 +841,7 @@ function render(){
     })();
 
     const taskInMonth=inMonth(r.resolutiondate)||inMonth(r.duedate)||inMonth(r.created)||inMonth(r.statuschanged)||inMonthUpdated(r.updated);
-    const plansToShow=!showPlan?[]:(r.plans||[]).filter(p=>{
+    const plansToShow=(!showPlan||_sortActive)?[]:(r.plans||[]).filter(p=>{
       if(!taskInMonth){
         const inM=inMonth(p.resolutiondate)||inMonth(p.duedate)||inMonth(p.created)||inMonth(p.statuschanged)||inMonthUpdated(p.updated);
         if(!inM) return false;
