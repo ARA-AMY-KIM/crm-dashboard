@@ -691,14 +691,7 @@ function setSort(key){
     if(sortDir==='desc') sortDir='asc';
     else { sortDir='desc'; sortKey=null; }
   } else { sortKey=key; sortDir='desc'; }
-  ['due','upd'].forEach(k=>{
-    const th=document.getElementById('th-'+k);
-    const ico=document.getElementById('ico-'+k);
-    if(!th||!ico) return;
-    if(sortKey&&k===sortKey){ th.classList.add('sorted'); ico.textContent=sortDir==='desc'?'↓':'↑'; }
-    else { th.classList.remove('sorted'); ico.textContent='↕'; }
-  });
-  render();
+  render();  // 정렬 화살표/하이라이트는 render()가 현재 상태 기준으로 그림
 }
 
 function shiftMonth(d){
@@ -780,7 +773,7 @@ function render(){
   if(!RAW.length) return;
   const filtered=RAW.filter(passFilter);
   const visible=sortKey?[...filtered].sort((a,b)=>{
-    const getVal=r=>sortKey==='due'?(r.duedate||r.resolutiondate||''):(r.updated||'');
+    const getVal=r=>sortKey==='due'?(isDone(r.status)?(r.resolutiondate||''):(r.duedate||'')):(r.updated||'');
     const va=getVal(a),vb=getVal(b);
     if(!va&&!vb) return 0; if(!va) return 1; if(!vb) return -1;
     return sortDir==='desc'?vb.localeCompare(va):va.localeCompare(vb);
@@ -894,13 +887,15 @@ function render(){
     </tr>${planRows}`;
   }).join('');
 
+  const _arw=k=>sortKey===k?(sortDir==='desc'?'↓':'↑'):'↕';
+  const _scl=k=>sortKey===k?' sorted':'';
   wrap.innerHTML=`<div class="tscroll"><table>
     <thead><tr>
       <th class="col-proj">구분</th>
       <th class="col-name">프로젝트명</th>
       <th class="col-who">담당자</th>
-      <th class="col-due sort-th" id="th-due" onclick="setSort('due')">기한/완료일<span class="sort-ico" id="ico-due">↕</span></th>
-      <th class="col-upd sort-th" id="th-upd" onclick="setSort('upd')">업데이트일<span class="sort-ico" id="ico-upd">↕</span></th>
+      <th class="col-due sort-th${_scl('due')}" id="th-due" onclick="setSort('due')">기한/완료일<span class="sort-ico" id="ico-due">${_arw('due')}</span></th>
+      <th class="col-upd sort-th${_scl('upd')}" id="th-upd" onclick="setSort('upd')">업데이트일<span class="sort-ico" id="ico-upd">${_arw('upd')}</span></th>
       <th class="col-st">상태</th>
       <th class="col-link">연결된 티켓</th>
       <th class="col-fav"></th>
