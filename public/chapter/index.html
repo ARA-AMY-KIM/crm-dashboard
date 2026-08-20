@@ -336,7 +336,7 @@ tr.fav-row:hover{background:#fff3c4;}
         </svg>
         <div>
           <div style="font-size:15px;font-weight:700;color:#1b1e30;line-height:1.2;">대시보드 이용 안내</div>
-          <div style="font-size:11px;color:#94a3b8;margin-top:2px;">CRM 기획챕터 · Jira 연동 · 2026.07.09 업데이트</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:2px;">CRM 기획챕터 · Jira 연동 · 2026.08.20 업데이트</div>
         </div>
       </div>
       <div class="info-section">
@@ -388,11 +388,12 @@ tr.fav-row:hover{background:#fff3c4;}
       <div class="info-section">
         <div class="info-section-title">상태 구분 — Plan 티켓</div>
         <ul>
-          <li>기획 완료 : 기획 완료 (초록)</li>
+          <li>기획 완료 / 최종 완료 : 완료 (초록) — 두 상태는 동일하게 처리되며, 배지에는 실제 Jira 상태명이 표시됩니다.</li>
           <li>진행 중 : 요구사항 분석 / 기획 진행 중</li>
           <li>할 일 : 할 일</li>
           <li>이슈 아님 : 이슈 아님 / 작업 중지</li>
         </ul>
+        <p style="margin-top:6px;font-size:11px;color:#94a3b8;">※ 상단 상태 필터·카운트는 작업 티켓 상태 기준입니다. Plan 티켓 상태는 필터 대상이 아니며 작업 티켓에 세트로 따라옵니다.</p>
       </div>
       <div class="info-divider"></div>
       <div class="info-section">
@@ -569,7 +570,8 @@ const isNoIssue= s => NOISSUE_S.has(s);
 
 const PLAN_NOISSUE = new Set(['이슈 아님','# 이슈 아님','보류','# 보류','작업 중지']);
 const PLAN_TODO    = new Set(['할 일','# 할 일','이슈 오픈','Backlog','BACKLOG','백로그']);
-const PLAN_DONE    = new Set(['기획 완료']);
+const PLAN_FINAL   = new Set(['최종 완료','# 최종 완료']);          // 하위작업 최종완료 = 완료 성격
+const PLAN_DONE    = new Set(['기획 완료','최종 완료','# 최종 완료']);
 function planStGroup(s){
   if(PLAN_NOISSUE.has(s)) return 'noissue';
   if(PLAN_TODO.has(s))    return 'todo';
@@ -579,6 +581,7 @@ function planStGroup(s){
 function planStDisplay(s){
   if(PLAN_NOISSUE.has(s)) return {s:'이슈 아님', c:'#6b7280', bg:'#f3f4f6'};
   if(PLAN_TODO.has(s))    return {s:'할 일',     c:'#94a3b8', bg:'#f1f5f9'};
+  if(PLAN_FINAL.has(s))   return {s:'최종 완료', c:'#16a34a', bg:'#dcfce7'};
   if(PLAN_DONE.has(s))    return {s:'기획 완료', c:'#16a34a', bg:'#dcfce7'};
   return                         {s:'진행 중',   c:'#7c3aed', bg:'#ede9fe'};
 }
