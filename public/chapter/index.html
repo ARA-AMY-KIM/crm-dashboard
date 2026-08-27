@@ -381,7 +381,8 @@ tr.fav-row:hover{background:#fff3c4;}
           <li>작업 진행 중 : 기획 완료 이후 디자인·개발·QA 등 후속 작업 진행/대기</li>
           <li>배포 대기 : 배포 대기</li>
           <li>완료 : 최종 완료</li>
-          <li>※ 보류·이슈 아님은 별도 칩 없이 '전체'에서만 표시되며, '완료·보류 숨기기'로 숨길 수 있습니다.</li>
+          <li>보류 : 보류 / 이슈 아님</li>
+          <li>※ '완료·보류 숨기기'를 켜면 완료·보류가 숨겨지고 두 칩(완료·보류)은 비활성화됩니다.</li>
         </ul>
       </div>
       <div class="info-divider"></div>
@@ -475,6 +476,7 @@ tr.fav-row:hover{background:#fff3c4;}
       <span class="fl">상태</span>
       <div class="chips">
         <button class="chip on" data-f="st" data-v="all"    onclick="sf('st','all',this)">전체</button>
+        <button class="chip"    data-f="st" data-v="hold"   onclick="sf('st','hold',this)">보류</button>
         <button class="chip"    data-f="st" data-v="todo"   onclick="sf('st','todo',this)">할 일</button>
         <button class="chip"    data-f="st" data-v="planip" onclick="sf('st','planip',this)">기획 진행 중</button>
         <button class="chip"    data-f="st" data-v="workip" onclick="sf('st','workip',this)">작업 진행 중</button>
@@ -504,6 +506,7 @@ tr.fav-row:hover{background:#fff3c4;}
         <span style="font-size:12px;color:var(--text-sub);white-space:nowrap;"><strong style="color:#0891b2;" id="n3">—</strong> 작업진행</span>
         <span style="font-size:12px;color:var(--text-sub);white-space:nowrap;"><strong style="color:#d97706;" id="n4">—</strong> 배포대기</span>
         <span style="font-size:12px;color:var(--text-sub);white-space:nowrap;"><strong style="color:#94a3b8;" id="n5">—</strong> 할일</span>
+        <span style="font-size:12px;color:var(--text-sub);white-space:nowrap;"><strong style="color:#6b7280;" id="n6">—</strong> 보류</span>
         <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0;">
           <div style="width:1px;height:14px;background:var(--border);"></div>
           <div class="toggle-wrap">
@@ -665,8 +668,8 @@ function toggleHideInactive(checkbox){
   localStorage.setItem('chapter_hideInactive', hideInactive);
   const label = document.getElementById('hide-inactive-label');
   if(label) label.classList.toggle('active', hideInactive);
-  // 완료 칩이 선택돼 있으면 전체로 되돌림 (토글과 충돌 방지)
-  if(hideInactive && F.st==='done'){
+  // 완료·보류 칩이 선택돼 있으면 전체로 되돌림 (토글과 충돌 방지)
+  if(hideInactive && (F.st==='done' || F.st==='hold')){
     F.st='all';
     document.querySelectorAll('[data-f="st"]').forEach(c=>c.classList.toggle('on', c.dataset.v==='all'));
   }
@@ -676,7 +679,7 @@ function toggleHideInactive(checkbox){
 
 function updateStatusChipsDisabled(){
   document.querySelectorAll('[data-f="st"]').forEach(c=>{
-    if(c.dataset.v==='done'){
+    if(c.dataset.v==='done' || c.dataset.v==='hold'){
       c.disabled = hideInactive;
       c.style.opacity = hideInactive ? '0.35' : '';
       c.style.cursor  = hideInactive ? 'not-allowed' : '';
@@ -751,7 +754,8 @@ function passFilter(r){
       (F.st==='planip'&&isPlanningIP(r.status))||
       (F.st==='workip'&&isInProg(r.status)&&!isPlanningIP(r.status))||
       (F.st==='deploy'&&isDeploy(r.status))||
-      (F.st==='todo'&&isTodo(r.status))
+      (F.st==='todo'&&isTodo(r.status))||
+      (F.st==='hold'&&isNoIssue(r.status))
     );
     if(!taskStMatch) return false;
   }
@@ -796,7 +800,7 @@ function render(){
   }
 
   // 카운트 Task만
-  let cntDone=0,cntPlanIP=0,cntWorkIP=0,cntDeploy=0,cntTodo=0,cntTotal=0;
+  let cntDone=0,cntPlanIP=0,cntWorkIP=0,cntDeploy=0,cntTodo=0,cntHold=0,cntTotal=0;
   for(const r of visible){
     if(r.isTargetAssignee===false) continue;
     cntTotal++;
@@ -805,12 +809,14 @@ function render(){
     else if(isPlanningIP(r.status)) cntPlanIP++;
     else if(isInProg(r.status)) cntWorkIP++;
     else if(isTodo(r.status)) cntTodo++;
+    else if(isNoIssue(r.status)) cntHold++;
   }
   document.getElementById('n1').textContent=cntDone;
   document.getElementById('n2').textContent=cntPlanIP;
   document.getElementById('n3').textContent=cntWorkIP;
   document.getElementById('n4').textContent=cntDeploy;
   document.getElementById('n5').textContent=cntTodo;
+  document.getElementById('n6').textContent=cntHold;
   document.getElementById('tcnt').textContent=`전체 ${cntTotal}건 (Task)`;
 
   const wrap=document.getElementById('table-body-wrap');
