@@ -336,7 +336,7 @@ tr.fav-row:hover{background:#fff3c4;}
         </svg>
         <div>
           <div style="font-size:15px;font-weight:700;color:#1b1e30;line-height:1.2;">대시보드 이용 안내</div>
-          <div style="font-size:11px;color:#94a3b8;margin-top:2px;">CRM 기획챕터 · Jira 연동 · 2026.08.20 업데이트</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:2px;">CRM 기획챕터 · Jira 연동 · 2026.09.07 업데이트</div>
         </div>
       </div>
       <div class="info-section">
@@ -614,7 +614,7 @@ const _now = new Date();
 let curYear = _now.getFullYear(), curMonth = _now.getMonth() + 1;
 const F = {proj:'all', who:'all', st:'all'};
 let sortKey = null, sortDir = 'desc';
-let favOnly = false;
+let favOnly = localStorage.getItem('chapter_favOnly') === 'true';
 let showPlan = localStorage.getItem('chapter_showPlan') !== 'false';
 let hideInactive = localStorage.getItem('chapter_hideInactive') === 'true';
 
@@ -636,22 +636,26 @@ function toggleFav(key, btn){
   saveFavs();
 }
 
-function toggleFavFilter(){
-  favOnly = !favOnly;
+function paintFavFilterIco(){
   const ico = document.getElementById('fav-filter-ico');
-  if(ico){
-    ico.setAttribute('fill', favOnly ? '#f59e0b' : 'none');
-    const path = ico.querySelector('path');
-    if(path){
-      if(favOnly){
-        path.setAttribute('stroke', 'none');
-      } else {
-        path.setAttribute('stroke', '#d1d5db');
-        path.setAttribute('stroke-width', '1.5');
-        path.setAttribute('stroke-linejoin', 'round');
-      }
+  if(!ico) return;
+  ico.setAttribute('fill', favOnly ? '#f59e0b' : 'none');
+  const path = ico.querySelector('path');
+  if(path){
+    if(favOnly){
+      path.setAttribute('stroke', 'none');
+    } else {
+      path.setAttribute('stroke', '#d1d5db');
+      path.setAttribute('stroke-width', '1.5');
+      path.setAttribute('stroke-linejoin', 'round');
     }
   }
+}
+
+function toggleFavFilter(){
+  favOnly = !favOnly;
+  localStorage.setItem('chapter_favOnly', favOnly);
+  paintFavFilterIco();
   render();
 }
 
@@ -976,6 +980,7 @@ function forceRefresh(){ loadData(true); }
   if(_planTgl){ _planTgl.checked=showPlan; document.getElementById('plan-toggle-label').classList.toggle('active', showPlan); }
   const _hiTgl=document.getElementById('hide-inactive-toggle');
   if(_hiTgl){ _hiTgl.checked=hideInactive; document.getElementById('hide-inactive-label').classList.toggle('active', hideInactive); }
+  paintFavFilterIco();
   updateStatusChipsDisabled();
 })();
 
