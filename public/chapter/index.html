@@ -153,7 +153,7 @@ td{padding:9px 14px;vertical-align:middle;}
 .col-due  {width:100px;white-space:nowrap;}
 .col-upd  {width:100px;white-space:nowrap;}
 .col-st   {width:128px;}
-.col-link {width:130px;}
+.col-key  {width:88px;}
 
 /* project badge */
 .pbadge{
@@ -187,15 +187,13 @@ td{padding:9px 14px;vertical-align:middle;}
   font-size:9px;font-weight:600;white-space:nowrap;
 }
 
-/* linked ticket */
-.linked{display:flex;flex-wrap:wrap;gap:4px;}
-.lchip{
-  font-size:10px;font-family:var(--mono);font-weight:500;
-  padding:1px 6px;border-radius:4px;
-  background:var(--sky-bg);color:var(--sky);
-  text-decoration:none;transition:opacity .12s;white-space:nowrap;
+/* ticket key */
+.tkey{
+  font-size:11px;font-family:var(--mono);font-weight:500;
+  color:var(--text-dim);text-decoration:none;
+  transition:color .12s;white-space:nowrap;
 }
-.lchip:hover{opacity:.7;}
+.tkey:hover{color:var(--indigo);text-decoration:underline;}
 
 /* loading / error / empty */
 .state-box{display:flex;align-items:center;justify-content:center;min-height:300px;flex-direction:column;gap:12px;}
@@ -336,14 +334,14 @@ tr.fav-row:hover{background:#fff3c4;}
         </svg>
         <div>
           <div style="font-size:15px;font-weight:700;color:#1b1e30;line-height:1.2;">대시보드 이용 안내</div>
-          <div style="font-size:11px;color:#94a3b8;margin-top:2px;">CRM 기획챕터 · Jira 연동 · 2026.09.07 업데이트</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:2px;">CRM 기획챕터 · Jira 연동 · 2026.09.18 업데이트</div>
         </div>
       </div>
       <div class="info-section">
         <div class="info-section-title">대상 티켓</div>
         <ul>
           <li>프로젝트 : CRM / PNB / CON</li>
-          <li>담당자 : 김아라 · 이동희 · 이성주 · 장은주 · 최세영 · 이예원</li>
+          <li>담당자 : 김아라 · 이동희 · 이성주 · 장은주 · 최세영</li>
           <li>티켓 타입 : 작업 티켓 + Plan 티켓 포함</li>
         </ul>
       </div>
@@ -378,7 +376,8 @@ tr.fav-row:hover{background:#fff3c4;}
         <ul>
           <li>할 일 : 시작 전 (이슈 오픈 / 백로그 포함)</li>
           <li>기획 진행 중 : 기획 단계 진행 중</li>
-          <li>작업 진행 중 : 기획 완료 이후 디자인·개발·QA 등 후속 작업 진행/대기</li>
+          <li>작업 진행 중 : 기획 완료 이후 디자인 · 개발 단계 진행/대기 (QA 제외)</li>
+          <li>QA : QA 대기 / QA 진행 중</li>
           <li>배포 대기 : 배포 대기</li>
           <li>완료 : 최종 완료</li>
           <li>보류 : 보류 / 이슈 아님</li>
@@ -398,8 +397,8 @@ tr.fav-row:hover{background:#fff3c4;}
       </div>
       <div class="info-divider"></div>
       <div class="info-section">
-        <div class="info-section-title">연결된 티켓</div>
-        <p>PNB·CON 티켓에 implements 관계로 연결된 CRM 티켓은 별도 행으로 노출되지 않고, 해당 티켓의 '연결된 티켓' 열에만 표시됩니다.</p>
+        <div class="info-section-title">중복 티켓 처리</div>
+        <p>PNB·CON 티켓에 implements 관계로 연결된 CRM 티켓은 중복을 피하기 위해 별도 행으로 노출되지 않습니다. 연결 관계는 티켓 키를 눌러 Jira에서 확인할 수 있습니다.</p>
       </div>
       <div class="info-divider"></div>
       <div class="info-section">
@@ -417,7 +416,8 @@ tr.fav-row:hover{background:#fff3c4;}
         <div class="info-section-title">기타</div>
         <ul>
           <li>상단 ‹ › 버튼으로 월 이동 가능, '이번 달' 버튼으로 현재 월로 즉시 이동</li>
-          <li>프로젝트 / 담당자 / 상태 필터 및 키워드 검색 지원 (티켓명 · 담당자 · 티켓 키)</li>
+          <li>담당자 / 상태 필터 및 키워드 검색 지원 (티켓명 · 담당자 · 티켓 키)</li>
+          <li>프로젝트 필터는 PNB · CON만 제공됩니다. CRM 티켓은 '전체'에 포함되어 표시됩니다.</li>
           <li>테이블 상단 '완료·보류 숨기기' 토글을 켜면 최종 완료 및 이슈 아님(보류) 상태의 작업 티켓(하위 Plan 포함)이 제외되어 진행 중인 작업만 표시됩니다. 이때 상태 필터의 '완료'·'이슈 아님'은 비활성화됩니다.</li>
           <li>'Plan 같이 보기' · '완료·보류 숨기기' · 즐겨찾기 설정은 브라우저에 저장되어 다음 방문에도 유지됩니다.</li>
           <li>기한/완료일 · 업데이트일 기준 정렬 가능 (헤더 클릭, 3회 클릭 시 초기화)</li>
@@ -455,7 +455,6 @@ tr.fav-row:hover{background:#fff3c4;}
         <button class="chip on" data-f="proj" data-v="all" onclick="sf('proj','all',this)">전체</button>
         <button class="chip"    data-f="proj" data-v="CON" onclick="sf('proj','CON',this)">CON</button>
         <button class="chip"    data-f="proj" data-v="PNB" onclick="sf('proj','PNB',this)">PNB</button>
-        <button class="chip"    data-f="proj" data-v="CRM" onclick="sf('proj','CRM',this)">CRM</button>
       </div>
     </div>
     <span class="tdiv"></span>
@@ -468,7 +467,6 @@ tr.fav-row:hover{background:#fff3c4;}
         <button class="chip"    data-f="who" data-v="이성주" onclick="sf('who','이성주',this)">이성주</button>
         <button class="chip"    data-f="who" data-v="장은주" onclick="sf('who','장은주',this)">장은주</button>
         <button class="chip"    data-f="who" data-v="최세영" onclick="sf('who','최세영',this)">최세영</button>
-        <button class="chip"    data-f="who" data-v="이예원" onclick="sf('who','이예원',this)">이예원</button>
       </div>
     </div>
     <span class="tdiv"></span>
@@ -479,6 +477,7 @@ tr.fav-row:hover{background:#fff3c4;}
         <button class="chip"    data-f="st" data-v="todo"   onclick="sf('st','todo',this)">할 일</button>
         <button class="chip"    data-f="st" data-v="planip" onclick="sf('st','planip',this)">기획 진행 중</button>
         <button class="chip"    data-f="st" data-v="workip" onclick="sf('st','workip',this)">작업 진행 중</button>
+        <button class="chip"    data-f="st" data-v="qa"     onclick="sf('st','qa',this)">QA</button>
         <button class="chip"    data-f="st" data-v="deploy" onclick="sf('st','deploy',this)">배포 대기</button>
         <button class="chip"    data-f="st" data-v="done"   onclick="sf('st','done',this)">완료</button>
         <button class="chip"    data-f="st" data-v="hold"   onclick="sf('st','hold',this)">보류</button>
@@ -504,6 +503,7 @@ tr.fav-row:hover{background:#fff3c4;}
         <span style="font-size:12px;color:var(--text-sub);white-space:nowrap;"><strong style="color:#16a34a;" id="n1">—</strong> 완료</span>
         <span style="font-size:12px;color:var(--text-sub);white-space:nowrap;"><strong style="color:#db2777;" id="n2">—</strong> 기획진행</span>
         <span style="font-size:12px;color:var(--text-sub);white-space:nowrap;"><strong style="color:#0891b2;" id="n3">—</strong> 작업진행</span>
+        <span style="font-size:12px;color:var(--text-sub);white-space:nowrap;"><strong style="color:#7c3aed;" id="n7">—</strong> QA</span>
         <span style="font-size:12px;color:var(--text-sub);white-space:nowrap;"><strong style="color:#d97706;" id="n4">—</strong> 배포대기</span>
         <span style="font-size:12px;color:var(--text-sub);white-space:nowrap;"><strong style="color:#94a3b8;" id="n5">—</strong> 할일</span>
         <span style="font-size:12px;color:var(--text-sub);white-space:nowrap;"><strong style="color:#6b7280;" id="n6">—</strong> 보류</span>
@@ -560,13 +560,15 @@ const INPROG_S = new Set([
   '# QA 대기','# QA 진행 중','# 디자인 진행 중','# 디자인 검토 대기',
   '# 작업 진행 중','진행 중','기획 완료','디자인 작업 완료',
 ]);
+const QA_S     = new Set(['# QA 대기','# QA 진행 중']);
 const DEPLOY_S = new Set(['# 배포 대기','배포 대기']);
 const TODO_S   = new Set(['할 일','# 할 일','이슈 오픈','Backlog','BACKLOG','백로그']);
 const NOISSUE_S= new Set(['이슈 아님','# 이슈 아님','보류','# 보류']);
 
 const isDone   = s => DONE_S.has(s);
 const isInProg = s => INPROG_S.has(s);
-const isPlanningIP = s => s==='# 기획 진행 중' || s==='기획 진행 중';  // 기획 진행 중 (기획챕터 핵심). 나머지 진행 상태는 '작업 진행 중'.
+const isPlanningIP = s => s==='# 기획 진행 중' || s==='기획 진행 중';  // 기획 진행 중 (기획챕터 핵심). QA를 뺀 나머지 진행 상태가 '작업 진행 중'.
+const isQA     = s => QA_S.has(s);
 const isDeploy = s => DEPLOY_S.has(s);
 const isTodo   = s => TODO_S.has(s);
 const isNoIssue= s => NOISSUE_S.has(s);
@@ -756,7 +758,8 @@ function passFilter(r){
     const taskStMatch=(
       (F.st==='done'&&isDone(r.status))||
       (F.st==='planip'&&isPlanningIP(r.status))||
-      (F.st==='workip'&&isInProg(r.status)&&!isPlanningIP(r.status))||
+      (F.st==='workip'&&isInProg(r.status)&&!isPlanningIP(r.status)&&!isQA(r.status))||
+      (F.st==='qa'&&isQA(r.status))||
       (F.st==='deploy'&&isDeploy(r.status))||
       (F.st==='todo'&&isTodo(r.status))||
       (F.st==='hold'&&isNoIssue(r.status))
@@ -804,13 +807,14 @@ function render(){
   }
 
   // 카운트 Task만
-  let cntDone=0,cntPlanIP=0,cntWorkIP=0,cntDeploy=0,cntTodo=0,cntHold=0,cntTotal=0;
+  let cntDone=0,cntPlanIP=0,cntWorkIP=0,cntQA=0,cntDeploy=0,cntTodo=0,cntHold=0,cntTotal=0;
   for(const r of visible){
     if(r.isTargetAssignee===false) continue;
     cntTotal++;
     if(isDone(r.status)) cntDone++;
     else if(isDeploy(r.status)) cntDeploy++;
     else if(isPlanningIP(r.status)) cntPlanIP++;
+    else if(isQA(r.status)) cntQA++;
     else if(isInProg(r.status)) cntWorkIP++;
     else if(isTodo(r.status)) cntTodo++;
     else if(isNoIssue(r.status)) cntHold++;
@@ -818,6 +822,7 @@ function render(){
   document.getElementById('n1').textContent=cntDone;
   document.getElementById('n2').textContent=cntPlanIP;
   document.getElementById('n3').textContent=cntWorkIP;
+  document.getElementById('n7').textContent=cntQA;
   document.getElementById('n4').textContent=cntDeploy;
   document.getElementById('n5').textContent=cntTodo;
   document.getElementById('n6').textContent=cntHold;
@@ -841,11 +846,6 @@ function render(){
     let dueTpl=!date?'<span class="due tbd">TBD</span>':label==='완료일'?`<span class="due done">✓ ${date}</span>`:`<span class="due val">${date}</span>`;
     const sc=gs(r.status);
     const stTpl=`<span class="stbadge" style="color:${sc.c};background:${sc.bg}">${ss(r.status)}</span>`;
-    let linkedTpl='—';
-    if(r.linkedCrm&&r.linkedCrm.length){
-      linkedTpl=`<div class="linked">${r.linkedCrm.map(k=>`<a class="lchip" href="${JIRA_BASE}/${k}" target="_blank">${k}</a>`).join('')}</div>`;
-    }
-
     const q=(document.getElementById('q')?.value||'').trim().toLowerCase();
     const isContext=r.isTargetAssignee===false||(()=>{
       if(F.who==='all'&&!q) return false;
@@ -878,6 +878,7 @@ function render(){
             <span style="font-size:10px;color:#94a3b8;font-weight:600;">Plan</span>
           </span>
         </td>
+        <td class="col-key"><a class="tkey" href="${JIRA_BASE}/${p.key}" target="_blank">${p.key}</a></td>
         <td class="col-name">
           <span style="display:inline-flex;align-items:center;gap:6px;">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="15 10 20 15 15 20"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/></svg>
@@ -888,7 +889,6 @@ function render(){
         <td class="col-due">${planDue}</td>
         <td class="col-upd"><span class="due tbd" style="color:var(--text-dim);">${p.updated||'—'}</span></td>
         <td class="col-st"><span class="stbadge" style="color:${sc2.c};background:${sc2.bg}">${pd.s}</span></td>
-        <td class="col-link">—</td>
         <td class="col-fav">
           <button class="fav-btn ${isPlanFav?'active':''}" onclick="toggleFav('${p.key}',this)" aria-label="즐겨찾기">
             ${isPlanFav?STAR_FILLED:STAR_EMPTY}
@@ -899,12 +899,12 @@ function render(){
 
     return `<tr class="${isFav?'fav-row':''}${isContext?' context-row':''}">
       <td class="col-proj"><span class="pbadge ${pbCls}">${proj}</span></td>
+      <td class="col-key"><a class="tkey" href="${JIRA_BASE}/${r.key}" target="_blank">${r.key}</a></td>
       <td class="col-name"><a class="tlink" href="${JIRA_BASE}/${r.key}" target="_blank">${r.name}</a></td>
       <td class="col-who"><span class="who">${r.assignee}</span></td>
       <td class="col-due">${dueTpl}</td>
       <td class="col-upd"><span class="due tbd" style="color:var(--text-dim);">${r.updated||'—'}</span></td>
       <td class="col-st">${stTpl}</td>
-      <td class="col-link">${linkedTpl}</td>
       <td class="col-fav">
         <button class="fav-btn ${isFav?'active':''}" onclick="toggleFav('${r.key}',this)" aria-label="즐겨찾기">
           ${isFav?STAR_FILLED:STAR_EMPTY}
@@ -918,12 +918,12 @@ function render(){
   wrap.innerHTML=`<div class="tscroll"><table>
     <thead><tr>
       <th class="col-proj">구분</th>
+      <th class="col-key">티켓 키</th>
       <th class="col-name">프로젝트명</th>
       <th class="col-who">담당자</th>
       <th class="col-due sort-th${_scl('due')}" id="th-due" onclick="setSort('due')">기한/완료일<span class="sort-ico" id="ico-due">${_arw('due')}</span></th>
       <th class="col-upd sort-th${_scl('upd')}" id="th-upd" onclick="setSort('upd')">업데이트일<span class="sort-ico" id="ico-upd">${_arw('upd')}</span></th>
       <th class="col-st">상태</th>
-      <th class="col-link">연결된 티켓</th>
       <th class="col-fav"></th>
     </tr></thead>
     <tbody>${rows}</tbody>
@@ -962,7 +962,7 @@ function forceRefresh(){ loadData(true); }
 (function applyUrlParams(){
   const params=new URLSearchParams(window.location.search);
   const who=params.get('who');
-  if(who&&['김아라','이동희','이성주','장은주','최세영','이예원'].includes(who)){
+  if(who&&['김아라','이동희','이성주','장은주','최세영'].includes(who)){
     F.who=who;
     document.querySelectorAll('[data-f="who"]').forEach(c=>c.classList.toggle('on',c.dataset.v===who));
   }
