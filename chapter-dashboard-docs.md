@@ -1,16 +1,18 @@
 # CRM 기획챕터 프로젝트 현황 대시보드
 
 > 최초 배포: 2026년 6월  
-> 최종 업데이트: 2026년 7월 9일 — 상태 필터 개편(기획/작업 진행 분리), 상태 배지 색상 개편, 정렬 수정 + 정렬 시 Plan 자동 숨김, 완료·보류 숨기기 토글, 월 필터 기본값=현재 월  
+> 최종 업데이트: 2026년 10월 30일 — **`/chapter/` → `/pnb-plan/` 대개편**(PNB·2인·최근 3개월로 범위 축소해 속도 개선, 백엔드 병렬화, 월 칩 3개, 상태 칩에 디자인 분리, 펭귄 헤더). 기존 `/chapter/` 제거.  
 > 담당: 김아라  
-> 배포 URL: https://aj-crm-dashboard.netlify.app/chapter/
+> 배포 URL: **https://aj-crm-dashboard.netlify.app/pnb-plan/** (구 `/chapter/`는 2026-10-30 제거)
 
 ---
 
 ## 개요
 
 Jira 티켓을 매월 컨플루언스에 수동 정리하던 작업을 자동화하기 위해 제작한 대시보드.  
-기존 CRM Admin 대시보드(`/`)와 동일한 Netlify 프로젝트 내 하위 경로(`/chapter/`)로 배포하여 기존 대시보드에 영향 없이 독립 운영.
+기존 CRM Admin 대시보드(`/`)와 동일한 Netlify 프로젝트 내 하위 경로로 배포하여 기존 대시보드에 영향 없이 독립 운영.
+
+> **2026-10-30 개편 요약**: 전 기간·3스페이스·5~6인(≈1,364건)으로 느리던 `/chapter/`를, **PNB 스페이스 / 담당자 김아라·최세영 2인 / 최근 3개월**로 범위를 좁힌 `/pnb-plan/`으로 교체. 백엔드는 `netlify/functions/pnb.js`(작업·Plan 쿼리 `Promise.all` 병렬). 월 이동은 화살표 대신 최근 3개월 칩, 상태 칩은 파이프라인(전체·할일·기획·디자인·개발·QA·배포대기·완료·보류)으로 현행화. 아래 본문의 기능 설명은 대부분 `/pnb-plan/`에 그대로 계승됨(복사본 기반).
 
 ---
 
@@ -20,21 +22,27 @@ Jira 티켓을 매월 컨플루언스에 수동 정리하던 작업을 자동화
 crm-dashboard/
 ├── public/
 │   ├── favicon.svg            # 그리즐리 곰 파비콘 (공통)
-│   └── chapter/
-│       └── index.html         # 기획챕터 대시보드 프론트엔드 (단일 HTML, 소스 원본)
+│   ├── pnb-plan/
+│   │   ├── index.html         # PNB 기획 대시보드 프론트엔드 (단일 HTML, 소스 원본)
+│   │   └── pnb-icon.png       # 펭귄 아이콘 (파비콘·헤더·모달)
+│   └── squad/                 # 스쿼드 담당자 현황 대시보드
 ├── src/                       # 기존 CRM Admin 대시보드(/) — React
 ├── netlify/
 │   └── functions/
 │       ├── jira.js            # 기존 CRM Admin 대시보드용 API
-│       └── chapter.js         # 기획챕터 대시보드용 API
-├── dist/                      # 빌드 산출물 (npm run build 시 생성, 배포 대상)
-│   └── chapter/index.html     # public/chapter/index.html이 복사된 결과
+│       ├── pnb.js             # PNB 기획 대시보드용 API (엔드포인트 /.netlify/functions/pnb)
+│       ├── squad.js           # 스쿼드 대시보드용 API
+│       └── package.json       # {"type":"commonjs"} — 함수 번들링 필수 (아래 ⚠️ 참고)
+├── dist/                      # 빌드 산출물 (npm run build 시 생성, gitignore됨)
+├── _backup/chapter_20261030/  # 제거된 구 /chapter/ 원본 백업 (index.html·chapter.js)
 ├── netlify.toml               # publish=dist, command=npm run build
-└── package.json
+└── package.json               # "type": "module" (vite용)
 ```
 
-> ⚠️ **소스 원본은 `public/chapter/index.html` 한 곳뿐이다.** `dist/chapter/index.html`은
-> `npm run build`가 만들어내는 산출물이므로 직접 수정하지 말 것. dist를 손으로 고쳐도 다음 빌드 때 덮어써진다.
+> ⚠️ **소스 원본은 `public/pnb-plan/index.html` 한 곳뿐이다.** `dist/`는
+> `npm run build`가 만들어내는 산출물이므로 직접 수정하지 말 것(gitignore됨). dist를 손으로 고쳐도 다음 빌드 때 덮어써진다.
+>
+> ⚠️ **`netlify/functions/package.json`(`{"type":"commonjs"}`)을 지우지 말 것.** 루트 `package.json`이 vite용으로 `"type":"module"`이라, 이게 없으면 CommonJS 함수(jira·pnb·squad)가 Netlify 빌드에서 "CommonJS module but type:module" 오류로 **번들링 실패**한다(2026-10-30 실제 발생). 함수 폴더에만 CommonJS를 선언해 해결.
 
 ---
 
@@ -46,7 +54,7 @@ crm-dashboard/
 | 백엔드 | Netlify Functions (Node.js) |
 | 데이터 소스 | Jira REST API v3 (`/search/jql`, 페이지네이션 포함) |
 | 빌드 | Vite (`npm run build` → `dist/`) |
-| 배포 | Netlify CLI (`npx netlify-cli deploy --prod`) |
+| 배포 | GitHub push → Netlify 자동 빌드(CD) |
 | 인증 | 환경변수 `JIRA_EMAIL`, `JIRA_API_TOKEN` (기존과 공유) |
 
 ---
