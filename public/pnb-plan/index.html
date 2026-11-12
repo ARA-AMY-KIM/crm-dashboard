@@ -362,7 +362,8 @@ tr.fav-row:hover{background:#fff3c4;}
       <div class="info-section">
         <div class="info-section-title">상태 구분 — 작업 티켓</div>
         <ul>
-          <li>할 일 : 시작 전 (이슈 오픈 / 백로그 포함)</li>
+          <li>백로그 : 백로그 (Backlog)</li>
+          <li>할 일 : 시작 전 (할 일 / 이슈 오픈)</li>
           <li>기획 : 기획 진행 중</li>
           <li>디자인 : 디자인 대기 / 디자인 진행 중 / 디자인 검토 대기</li>
           <li>개발 : 개발 대기 / 개발 진행 중 (작업 진행 중 포함)</li>
@@ -440,6 +441,7 @@ tr.fav-row:hover{background:#fff3c4;}
       <span class="fl">상태</span>
       <div class="chips">
         <button class="chip on" data-f="st" data-v="all"    onclick="sf('st','all',this)">전체</button>
+        <button class="chip"    data-f="st" data-v="backlog" onclick="sf('st','backlog',this)">백로그</button>
         <button class="chip"    data-f="st" data-v="todo"   onclick="sf('st','todo',this)">할 일</button>
         <button class="chip"    data-f="st" data-v="planip" onclick="sf('st','planip',this)">기획</button>
         <button class="chip"    data-f="st" data-v="design" onclick="sf('st','design',this)">디자인</button>
@@ -473,6 +475,7 @@ tr.fav-row:hover{background:#fff3c4;}
         <span style="font-size:12px;color:var(--text-sub);white-space:nowrap;"><strong style="color:#0891b2;" id="n3">—</strong> 개발</span>
         <span style="font-size:12px;color:var(--text-sub);white-space:nowrap;"><strong style="color:#7c3aed;" id="n7">—</strong> QA</span>
         <span style="font-size:12px;color:var(--text-sub);white-space:nowrap;"><strong style="color:#d97706;" id="n4">—</strong> 배포대기</span>
+        <span style="font-size:12px;color:var(--text-sub);white-space:nowrap;"><strong style="color:#475569;" id="n9">—</strong> 백로그</span>
         <span style="font-size:12px;color:var(--text-sub);white-space:nowrap;"><strong style="color:#94a3b8;" id="n5">—</strong> 할일</span>
         <span style="font-size:12px;color:var(--text-sub);white-space:nowrap;"><strong style="color:#6b7280;" id="n6">—</strong> 보류/이슈 아님</span>
         <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0;">
@@ -531,7 +534,8 @@ const INPROG_S = new Set([
 const QA_S     = new Set(['# QA 대기','# QA 진행 중']);
 const DESIGN_S = new Set(['# 디자인 대기','# 디자인 진행 중','# 디자인 검토 대기']);
 const DEPLOY_S = new Set(['# 배포 대기','배포 대기']);
-const TODO_S   = new Set(['할 일','# 할 일','이슈 오픈','Backlog','BACKLOG','백로그']);
+const BACKLOG_S= new Set(['Backlog','BACKLOG','백로그','# 백로그']);
+const TODO_S   = new Set(['할 일','# 할 일','이슈 오픈']);
 const NOISSUE_S= new Set(['이슈 아님','# 이슈 아님','보류','# 보류']);
 
 const isDone   = s => DONE_S.has(s);
@@ -541,6 +545,7 @@ const isQA     = s => QA_S.has(s);
 const isDesign = s => DESIGN_S.has(s);
 const isDeploy = s => DEPLOY_S.has(s);
 const isTodo   = s => TODO_S.has(s);
+const isBacklog= s => BACKLOG_S.has(s);
 const isNoIssue= s => NOISSUE_S.has(s);
 
 const PLAN_NOISSUE = new Set(['이슈 아님','# 이슈 아님','보류','# 보류','작업 중지']);
@@ -572,8 +577,9 @@ const ST_MAP = {
   '진행 중':{c:'#0891b2',bg:'#cffafe'},
   '# 배포 대기':{c:'#d97706',bg:'#fef3c7'},'배포 대기':{c:'#d97706',bg:'#fef3c7'},
   '할 일':{c:'#94a3b8',bg:'#f1f5f9'},'# 할 일':{c:'#94a3b8',bg:'#f1f5f9'},
-  '이슈 오픈':{c:'#94a3b8',bg:'#f1f5f9'},'Backlog':{c:'#94a3b8',bg:'#f1f5f9'},
-  'BACKLOG':{c:'#94a3b8',bg:'#f1f5f9'},'백로그':{c:'#94a3b8',bg:'#f1f5f9'},
+  '이슈 오픈':{c:'#94a3b8',bg:'#f1f5f9'},
+  'Backlog':{c:'#475569',bg:'#e2e8f0'},'BACKLOG':{c:'#475569',bg:'#e2e8f0'},
+  '백로그':{c:'#475569',bg:'#e2e8f0'},'# 백로그':{c:'#475569',bg:'#e2e8f0'},
   '이슈 아님':{c:'#6b7280',bg:'#f3f4f6'},'# 이슈 아님':{c:'#6b7280',bg:'#f3f4f6'},
   '보류':{c:'#6b7280',bg:'#f3f4f6'},'# 보류':{c:'#6b7280',bg:'#f3f4f6'},
 };
@@ -738,6 +744,7 @@ function passFilter(r){
       (F.st==='design'&&isDesign(r.status))||
       (F.st==='qa'&&isQA(r.status))||
       (F.st==='deploy'&&isDeploy(r.status))||
+      (F.st==='backlog'&&isBacklog(r.status))||
       (F.st==='todo'&&isTodo(r.status))||
       (F.st==='hold'&&isNoIssue(r.status))
     );
@@ -784,7 +791,7 @@ function render(){
   }
 
   // 카운트 Task만
-  let cntDone=0,cntPlanIP=0,cntDesign=0,cntWorkIP=0,cntQA=0,cntDeploy=0,cntTodo=0,cntHold=0,cntTotal=0;
+  let cntDone=0,cntPlanIP=0,cntDesign=0,cntWorkIP=0,cntQA=0,cntDeploy=0,cntBacklog=0,cntTodo=0,cntHold=0,cntTotal=0;
   for(const r of visible){
     if(r.isTargetAssignee===false) continue;
     cntTotal++;
@@ -794,6 +801,7 @@ function render(){
     else if(isDesign(r.status)) cntDesign++;
     else if(isQA(r.status)) cntQA++;
     else if(isInProg(r.status)) cntWorkIP++;
+    else if(isBacklog(r.status)) cntBacklog++;
     else if(isTodo(r.status)) cntTodo++;
     else if(isNoIssue(r.status)) cntHold++;
   }
@@ -803,6 +811,7 @@ function render(){
   document.getElementById('n7').textContent=cntQA;
   document.getElementById('n8').textContent=cntDesign;
   document.getElementById('n4').textContent=cntDeploy;
+  document.getElementById('n9').textContent=cntBacklog;
   document.getElementById('n5').textContent=cntTodo;
   document.getElementById('n6').textContent=cntHold;
   document.getElementById('tcnt').textContent=`전체 ${cntTotal}건 (Task)`;
